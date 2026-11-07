@@ -7,6 +7,7 @@ import {
   TabListProps,
 } from 'expo-router/ui';
 import { SymbolView } from 'expo-symbols';
+import { router } from 'expo-router';
 import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
 
 import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -26,6 +27,15 @@ export default function AppTabs() {
           </TabTrigger>
           <TabTrigger name="explore" href="/explore" asChild>
             <TabButton>Explore</TabButton>
+          </TabTrigger>
+          <TabTrigger name="joined" href="/joined" asChild>
+            <TabButton>참여 중</TabButton>
+          </TabTrigger>
+          <TabButton isFocused={false} onPress={() => router.navigate('/discussions/create')}>
+            만들기
+          </TabButton>
+          <TabTrigger name="my" href="/my" asChild>
+            <TabButton>마이</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>

@@ -1,28 +1,25 @@
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppSurfaces, AppTypography } from '@/constants/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 // 토론 데이터의 형태 정의
-export type Discussion = {
-  id: number;
-  category: string;
-  title: string;
-  description: string;
-  participants: number;
-};
+import type { Discussion } from '@/types/discussion';
+export type { Discussion } from '@/types/discussion';
 
 // 컴포넌트가 외부에서 받을 정보
 type Props = {
   discussion: Discussion;
   onPress: () => void;
+  recommended?: boolean;
 };
 
 // 실제 토론 카드
-export function DiscussionCard({ discussion, onPress }: Props) {
+export function DiscussionCard({ discussion, onPress, recommended = false }: Props) {
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable accessibilityRole="button" accessibilityLabel={discussion.title}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={onPress}>
       <View style={styles.cardTop}>
-        <Text style={styles.tag}>{discussion.category}</Text>
-        <Text style={styles.status}>진행 중</Text>
+        <Text style={styles.tag}>{[recommended ? '추천' : null, discussion.category,
+          !recommended ? discussion.kind : null, discussion.status === 'CLOSED' ? '종료' : '진행 중'].filter(Boolean).join(' · ')}</Text>
       </View>
 
       <Text style={styles.title}>{discussion.title}</Text>
@@ -32,7 +29,7 @@ export function DiscussionCard({ discussion, onPress }: Props) {
       </Text>
 
       <Text style={styles.participants}>
-        참여 {discussion.participants}명
+        참여 {discussion.participants}명{discussion.opinionCount !== undefined ? `   의견 ${discussion.opinionCount}개` : ''}
       </Text>
     </Pressable>
   );
@@ -41,41 +38,27 @@ export function DiscussionCard({ discussion, onPress }: Props) {
 // 토론 카드 전용 스타일
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: AppColors.surface,
-    padding: 18,
-    borderRadius: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: AppColors.border,
+    ...AppSurfaces.card,
   },
   cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    alignSelf: 'stretch',
   },
   tag: {
     color: AppColors.primary,
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  status: {
-    color: AppColors.textSecondary,
-    fontSize: 12,
+    ...AppTypography.caption,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...AppTypography.heading,
     color: AppColors.text,
-    marginBottom: 8,
   },
   description: {
-    fontSize: 13,
+    ...AppTypography.body,
     color: AppColors.textSecondary,
-    marginBottom: 14,
   },
   participants: {
-    fontSize: 12,
+    ...AppTypography.caption,
     color: AppColors.textSecondary,
   },
+  pressed: { opacity: 0.65 },
 });
 
