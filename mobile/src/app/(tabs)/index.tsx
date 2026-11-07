@@ -19,7 +19,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.frame}>
-        <ScreenHeader title="영업중" />
+        <ScreenHeader title="영업중" brand />
         <ScrollView contentContainerStyle={styles.content}>
           <AppButton label="관심 있는 주제를 검색해 보세요" onPress={() => router.navigate('/discussions')} />
           <Text accessibilityRole="header" style={styles.title}>지금, 생각이 모이는 곳</Text>

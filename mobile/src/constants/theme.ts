@@ -82,12 +82,13 @@ export const AppSpacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
 export const AppRadius = { button: 12, card: 16 } as const;
 export const AppLayout = { maxWidth: 600, touchTarget: 44, iconSize: 24 } as const;
 export const AppTypography = {
-  title: { fontFamily: 'NotoSansKR', fontSize: 24, lineHeight: 34, fontWeight: '700' },
-  heading: { fontFamily: 'NotoSansKR', fontSize: 18, lineHeight: 27, fontWeight: '700' },
-  body: { fontFamily: 'NotoSansKR', fontSize: 15, lineHeight: 23, fontWeight: '400' },
-  label: { fontFamily: 'NotoSansKR', fontSize: 15, lineHeight: 22, fontWeight: '500' },
-  caption: { fontFamily: 'NotoSansKR', fontSize: 12, lineHeight: 19, fontWeight: '400' },
-  tab: { fontFamily: 'NotoSansKR', fontSize: 11, lineHeight: 18, fontWeight: '500' },
+  logo: { fontSize: 28, fontWeight: '800' },
+  title: { fontSize: 24, lineHeight: 34, fontWeight: '700' },
+  heading: { fontSize: 18, lineHeight: 27, fontWeight: '700' },
+  body: { fontSize: 15, lineHeight: 23, fontWeight: '400' },
+  label: { fontSize: 15, lineHeight: 22, fontWeight: '500' },
+  caption: { fontSize: 12, lineHeight: 19, fontWeight: '400' },
+  tab: { fontSize: 11, lineHeight: 18, fontWeight: '500' },
 } as const;
 
 export const AppSurfaces = {

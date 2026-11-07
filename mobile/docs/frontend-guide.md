@@ -1,5 +1,11 @@
 # 영업중 HM-100 홈 및 프런트엔드 기반 개선
 
+> 후속 수정: 홈의 검색·인기·추천 구성은 유지하고, 글꼴은 시스템 기본으로 변경했습니다.
+> 홈 로고는 main의 28 크기·800 굵기·#1F2937로 복원했습니다.
+> 툴바는 main의 모바일 NativeTabs와 웹 Expo Starter·Home·Explore·Docs 코드/스타일을 복원하고 참여 중·만들기·마이만 추가했습니다.
+> 모바일 create-action은 NativeTabs 항목 연결용 경로이며, 실제 생성 기능은 기존 /discussions/create를 사용합니다.
+> 아래 A~I는 최초 구현 기록입니다. 현재 툴바는 app-tabs.tsx / app-tabs.web.tsx가 직접 담당합니다.
+
 작업일: 2026-11-08. 작업 브랜치: `feat/home-foundation`.
 FE 기준 commit: `4099d0896ef03d2c41d168e3b9b3f29f2df49bea` (GitHub main과 일치).
 작업 전 `feat/navigation`의 미커밋 화면 이동 구현을 보존한 채 새 브랜치를 만들었습니다.
