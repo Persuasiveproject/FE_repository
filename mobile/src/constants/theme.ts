@@ -63,3 +63,17 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+
+/**
+ * 영업중 공통 UI 색상
+ * 현재 임시 색상이며 추후 Figma 기준으로 변경 예정
+ */
+export const AppColors = {
+  primary: '#2563EB',
+  background: '#F8FAFC',
+  surface: '#FFFFFF',
+  text: '#111827',
+  textSecondary: '#6B7280',
+  border: '#E5E7EB',
+} as const;

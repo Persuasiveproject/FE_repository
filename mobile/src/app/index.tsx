@@ -1,3 +1,4 @@
+import { AppColors } from '@/constants/theme';
 import { useState } from 'react';
 import {
   Pressable,
@@ -150,7 +151,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.background,
   },
   container: {
     padding: 20,
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   createButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: AppColors.primary,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: '#6B7280',
+    color: AppColors.textSecondary,
     marginTop: 8,
   },
   categoryContainer: {
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   selectedCategory: {
-    backgroundColor: '#2563EB',
+    backgroundColor: AppColors.primary,
   },
   categoryText: {
     color: '#374151',
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: AppColors.text,
   },
   count: {
     color: '#6B7280',
