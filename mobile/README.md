@@ -30,8 +30,8 @@ iOS 네이티브 실행은 iOS 기기 또는 macOS 환경이 필요합니다. Wi
 | `npm.cmd run web` | 웹 열기 |
 | `npm.cmd run typecheck` | TypeScript 검사 |
 | `npm.cmd run lint` | ESLint 검사 |
-| `npm.cmd test` | API 오류/Mock/검색·필터 테스트 |
-| `npm.cmd run test:web` | 실행 중인 localhost:8082의 9개 경로 HTTP·SSR 검사 |
+| `npm.cmd test` | API 오류/검색·필터/핵심 사용 흐름 19개 테스트 |
+| `npm.cmd run test:web` | 실행 중인 localhost:8082의 23개 경로 HTTP·SSR 검사 |
 | `npx.cmd expo export --platform all --output-dir .expo/check-export` | Android/iOS/Web 번들 검사 |
 
 test:web는 브라우저에서 클릭하거나 화면을 촬영하는 테스트가 아닙니다. 다른 포트는 WEB_TEST_URL 환경변수로 지정합니다.
@@ -41,13 +41,14 @@ test:web는 브라우저에서 클릭하거나 화면을 촬영하는 테스트�
 
 - HM-100 홈: 검색 진입, 인기·추천 카드, 더보기, 하단 메뉴.
 - 목록: 기존 예시 토론·카테고리 필터 유지, 검색어/진행·종료 필터, 빈 상태.
-- 카드: 토론 ID별 상세 임시 화면으로 이동.
-- 만들기: 탭이 아닌 Stack의 생성 임시 화면으로 이동.
-- 상세·생성: 제목과 뒤로 가기. 이전 화면이 없으면 홈으로 복귀.
-- 참여 중·마이: 준비 중 임시 화면. 로그인/개인화/실제 참여 데이터 없음.
+- 카드: 토론 ID별 상세·입장 선택·의견·답글·추천/비추천·입장 변경으로 이동.
+- 만들기: 탭이 아닌 Stack에서 주제/방식 → 본문 → 비용 확인의 3단계 데모 게시.
+- 로그인·가입·휴대폰 확인: 폼과 데모 계정. 실제 인증/SMS/카카오 연결은 준비 중.
+- 종료 결과: 최종 선택 비율·입장 변화 도표. AI 요약은 기존 의견을 활용한 데모.
+- 참여 중·마이: 진행/종료 참여 목록, 프로필 수정, 코인 내역, 크레딧·배지, 로그아웃.
 - 툴바: main의 모바일 NativeTabs/웹 Expo Starter·Home·Explore·Docs 디자인을 유지하고 참여 중·만들기·마이만 추가.
 - /explore: 기존 Explore 항목과 화면을 그대로 유지.
-- 홈과 목록 데이터는 Mock입니다. 실제 서버 집계·추천이 아닙니다.
+- 모든 핵심 데이터는 메모리 Mock입니다. 실제 서버 집계·추천·결제가 아니며 새로고침/재시작 시 초기화됩니다.
 
 홈에 있던 카테고리 필터와 + 만들기 기능은 각각 검색/더보기의 목록과 하단 만들기로 옮겼습니다. 기능을 삭제하지 않았습니다.
 
@@ -56,20 +57,31 @@ test:web는 브라우저에서 클릭하거나 화면을 촬영하는 테스트�
 ```text
 src/
   app/
-    _layout.tsx                전체 Stack·테마·글꼴
+    _layout.tsx                전체 Stack·테마·세션 공유
     (tabs)/
       _layout.tsx              공통 탭 연결
       index.tsx                HM-100 홈
-      joined.tsx / my.tsx      임시 화면
+      joined.tsx / my.tsx      참여 목록·마이 경로
       explore.tsx              보존된 예제
     discussions/
       index.tsx                검색·목록·필터
-      [id].tsx / create.tsx    상세·생성 임시 화면
+      [id].tsx / create.tsx    상세·생성 경로
+      [id]/                   입장·의견·답글·요약·결과 경로
+    auth/                     로그인·휴대폰·가입 경로
+    account/                  프로필·코인·크레딧 경로
   components/                  카드·헤더·상태·탭·임시 화면
     ui/app-button.tsx          공통 버튼
   constants/theme.ts           Expo 토큰과 영업중 토큰 중앙 관리
   features/discussions/        Mock·필터 로직·카테고리 UI
+  features/auth/               로그인·가입 폼
+  features/debates/            토론 생성·상세·입장·요약·결과
+  features/opinions/           의견 카드·작성·답글
+  features/account/            참여 목록·마이·프로필·내역
+  features/session/            공통 로그인 상태
+  features/core/               공통 입력 규칙·선택 UI
   hooks/use-resource.ts        조회 상태·오류·재시도
+  hooks/use-focus-resource.ts  화면 복귀 시 재조회
+  hooks/use-mutation.ts        쓰기 중 잠금·오류 처리
   services/                    데이터 공급과 API 요청
   types/                       화면 타입 / BE 응답 타입
 assets/fonts/                  Noto Sans KR 및 OFL 라이선스
@@ -83,25 +95,28 @@ docs/                          파일별 설명·BE 계약
 `.env.example`를 `.env.local`로 복사하여 서버 origin을 설정합니다. Mock 실행에는 필요하지 않습니다.
 
 ```dotenv
+EXPO_PUBLIC_DATA_SOURCE=mock
 EXPO_PUBLIC_API_BASE_URL=https://your-api-origin.example
 ```
 
 위 주소는 예시이며 실제 서버가 아닙니다. 공개 환경변수에 비밀값을 저장하지 마세요.
+`api` 모드는 현재 연결 준비 중 오류를 표시합니다. 서버 주소와 모드만 바꾸면 연결되는 상태가 아닙니다.
 서버에서 실제로 확인한 경로, 인증 미확정 부분, 응답 타입은 [BE 계약 문서](docs/backend-contract.md)를 확인하세요.
 
 API 연동 시 수정 위치는 다음과 같습니다.
 
 1. `api-client.ts`: 주소·공통 요청·오류·인증.
 2. `types/api.ts`: 확인된 BE 응답 구조.
-3. `services/discussions.ts`: Mock → 실제 데이터, DTO → 화면 타입 변환.
-4. 화면은 같은 service 함수와 카드 Props를 사용하도록 유지합니다.
+3. `services/app-gateway.ts`와 `types/core.ts`: 화면이 요구하는 기능·데이터 계약.
+4. 실제 HTTP gateway를 구현하고 `services/gateway.ts`에서 연결합니다. 홈/목록은 `services/discussions.ts`도 확인합니다.
+5. 화면은 같은 gateway와 카드 Props를 사용하도록 유지합니다. 인증 전용 폼은 실제 계약에 맞춰 연결합니다.
 
 ## 공통 컴포넌트 사용
 
 | 컴포넌트 | Props | 사용처·주의 |
 | --- | --- | --- |
 | DiscussionCard | discussion, onPress, recommended? | 카드 자체는 API/화면 이동을 결정하지 않음 |
-| AppButton | label, onPress, disabled?, selected? | 검색 진입·필터·재시도 |
+| AppButton | label, onPress, disabled?, selected?, loading?, variant? | 기본 모양 유지, primary/로딩 선택 가능 |
 | ScreenHeader | title, back? | 홈·목록 헤더 |
 | ResourceState | kind, message?, onRetry? | loading/error/empty. error일 때 재시도 가능 |
 | CategoryFilter | value, onChange | 선택 상태는 화면에서 관리 |
@@ -142,3 +157,5 @@ ESLint에서 기존 Expo 웹 hydration 훅 한 파일의 set-state-in-effect 규
 npm 설치 결과 moderate 12건이 보고되었습니다. 강제 버전 변경은 하지 않았으며, 별도 의존성 점검이 필요합니다.
 
 [상세 변경 설명과 PR 안내](docs/frontend-guide.md)
+
+[핵심 화면별 코드·수정 방법·실행 순서](docs/core-screens-guide.md) · [핵심 API 연동 안내](docs/core-api-integration.md) · [최종 검증 기록](docs/core-verification.md)

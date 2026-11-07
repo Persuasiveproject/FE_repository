@@ -2,6 +2,9 @@
 
 확인일: 2026-11-08. BE는 읽기 전용으로 확인했으며 파일을 변경하지 않았습니다.
 
+핵심 화면은 메모리 기반 `AppGateway`로 구현했습니다. [화면 안내](core-screens-guide.md)와 [API 연결 방법](core-api-integration.md)을 함께 확인하세요.
+화면 구현과 실서버 연결 여부는 구분합니다. 아래 경로는 여전히 실제 앱에 연결되지 않았습니다.
+
 ## 확인 기준
 
 - [BE main](https://github.com/Persuasiveproject/BE_repository/tree/8c5e4b3b5ed339d2bb887db14d26c30bb2686310): README만 있습니다.
@@ -80,7 +83,8 @@ UI용 `Discussion`과 같은 구조라고 간주하거나 없는 값을 실제 �
 
 홈 인기/추천, 공개 토론 목록·검색·상세, 생성, 로그인, 댓글/대댓글, 투표의 연결된 URL은 확인 기준 develop에서 찾지 못했습니다.
 모델이 존재하는 것과 API가 구현된 것은 다릅니다. 이 경로를 추측해 FE에 추가하지 않았습니다.
-Mock 홈/목록은 `src/services/discussions.ts`를 통해서만 공급합니다. 실제 API 계약이 나오면 이 service에서 DTO를 화면용 타입으로 변환합니다.
+Mock 핵심 데이터는 `src/services/mock-gateway.ts`가 공급하며 화면은 `gateway`를 사용합니다.
+기존 홈/목록은 `src/services/discussions.ts`를 거쳐 같은 데이터를 사용합니다. 실제 계약이 나오면 HTTP gateway와 DTO 변환을 추가합니다.
 
 ## 서버 연결 시 체크
 

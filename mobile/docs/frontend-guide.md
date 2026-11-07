@@ -1,5 +1,8 @@
 # 영업중 HM-100 홈 및 프런트엔드 기반 개선
 
+> 핵심 화면 후속 구현은 [core-screens-guide.md](core-screens-guide.md), [API 연동 안내](core-api-integration.md)를 확인하세요.
+> 아래 내용은 홈 기반 작업 당시 기록입니다. 현재 상세·생성·참여 중·마이는 데모 기능 화면으로 교체되었습니다.
+
 > 후속 수정: 홈의 검색·인기·추천 구성은 유지하고, 글꼴은 시스템 기본으로 변경했습니다.
 > 홈 로고는 main의 28 크기·800 굵기·#1F2937로 복원했습니다.
 > 툴바는 main의 모바일 NativeTabs와 웹 Expo Starter·Home·Explore·Docs 코드/스타일을 복원하고 참여 중·만들기·마이만 추가했습니다.
