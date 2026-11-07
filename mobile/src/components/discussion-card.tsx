@@ -1,3 +1,4 @@
+import { AppColors } from '@/constants/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 // 토론 데이터의 형태 정의
@@ -40,12 +41,12 @@ export function DiscussionCard({ discussion, onPress }: Props) {
 // 토론 카드 전용 스타일
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface,
     padding: 18,
     borderRadius: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: AppColors.border,
   },
   cardTop: {
     flexDirection: 'row',
@@ -53,27 +54,28 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   tag: {
-    color: '#2563EB',
+    color: AppColors.primary,
     fontWeight: '600',
     fontSize: 12,
   },
   status: {
-    color: '#6B7280',
+    color: AppColors.textSecondary,
     fontSize: 12,
   },
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: AppColors.text,
     marginBottom: 8,
   },
   description: {
     fontSize: 13,
-    color: '#6B7280',
+    color: AppColors.textSecondary,
     marginBottom: 14,
   },
   participants: {
     fontSize: 12,
-    color: '#6B7280',
+    color: AppColors.textSecondary,
   },
 });
+
