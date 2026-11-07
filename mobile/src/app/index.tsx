@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   Pressable,
@@ -8,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DiscussionCard } from '@/components/discussion-card';
 
 // 1. 카테고리 목록
 const categories = ['전체', '사회', '기술', '문화', '경제'];
@@ -113,28 +113,20 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* 토론 카드 목록 */}
-        {filteredDiscussions.map((item) => (
-          <Pressable
-            key={item.id}
-            style={styles.card}
-            onPress={() =>
-              setNotice(`${item.title} 상세 화면은 다음에 구현합니다.`)
-            }>
-            <View style={styles.cardTop}>
-              <Text style={styles.tag}>{item.category}</Text>
-              <Text style={styles.status}>진행 중</Text>
-            </View>
+        
+        
+          {/* 토론 카드 목록 */}
+          {filteredDiscussions.map((item) => (
+            <DiscussionCard
+              key={item.id}
+              discussion={item}
+              onPress={() =>
+                setNotice(`${item.title} 상세 화면은 다음에 구현합니다.`)
+              }
+            />
+          ))}
 
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardDescription}>
-              {item.description}
-            </Text>
-            <Text style={styles.participants}>
-              참여 {item.participants}명
-            </Text>
-          </Pressable>
-        ))}
+
 
         {/* 목록이 비어 있을 때 */}
         {filteredDiscussions.length === 0 && (
@@ -154,6 +146,7 @@ export default function HomeScreen() {
 }
 
 // 4. 화면 디자인 설정
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
