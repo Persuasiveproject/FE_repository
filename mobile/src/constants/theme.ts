@@ -67,13 +67,32 @@ export const MaxContentWidth = 800;
 
 /**
  * 영업중 공통 UI 색상
- * 현재 임시 색상이며 추후 Figma 기준으로 변경 예정
+ * Figma HM-100의 색상. Expo 예제용 Colors/Spacing은 호환성을 위해 유지합니다.
  */
 export const AppColors = {
-  primary: '#2563EB',
-  background: '#F8FAFC',
+  primary: '#0EA5E9',
+  background: '#F5F7F9',
   surface: '#FFFFFF',
-  text: '#111827',
-  textSecondary: '#6B7280',
-  border: '#E5E7EB',
+  text: '#172B3A',
+  textSecondary: '#637381',
+  border: '#E3E9EE',
+} as const;
+
+export const AppSpacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
+export const AppRadius = { button: 12, card: 16 } as const;
+export const AppLayout = { maxWidth: 600, touchTarget: 44, iconSize: 24 } as const;
+export const AppTypography = {
+  title: { fontFamily: 'NotoSansKR', fontSize: 24, lineHeight: 34, fontWeight: '700' },
+  heading: { fontFamily: 'NotoSansKR', fontSize: 18, lineHeight: 27, fontWeight: '700' },
+  body: { fontFamily: 'NotoSansKR', fontSize: 15, lineHeight: 23, fontWeight: '400' },
+  label: { fontFamily: 'NotoSansKR', fontSize: 15, lineHeight: 22, fontWeight: '500' },
+  caption: { fontFamily: 'NotoSansKR', fontSize: 12, lineHeight: 19, fontWeight: '400' },
+  tab: { fontFamily: 'NotoSansKR', fontSize: 11, lineHeight: 18, fontWeight: '500' },
+} as const;
+
+export const AppSurfaces = {
+  card: { backgroundColor: AppColors.surface, borderWidth: 1, borderColor: AppColors.border,
+    borderRadius: AppRadius.card, padding: AppSpacing.lg, gap: AppSpacing.sm },
+  button: { minHeight: 48, borderRadius: AppRadius.button, paddingHorizontal: AppSpacing.lg,
+    borderWidth: 1, borderColor: AppColors.border, backgroundColor: AppColors.surface },
 } as const;
