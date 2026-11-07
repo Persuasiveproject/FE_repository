@@ -7,12 +7,12 @@ import { ResourceState } from '@/components/resource-state';
 import { ScreenHeader } from '@/components/screen-header';
 import { AppButton } from '@/components/ui/app-button';
 import { AppColors, AppLayout, AppSpacing, AppSurfaces, AppTypography } from '@/constants/theme';
-import { useResource } from '@/hooks/use-resource';
+import { useFocusResource } from '@/hooks/use-focus-resource';
 import { getHomeFeed } from '@/services/discussions';
 import type { Discussion } from '@/types/discussion';
 
 export default function HomeScreen() {
-  const { resource, retry } = useResource(getHomeFeed);
+  const { resource, reload: retry } = useFocusResource(getHomeFeed);
   function openDiscussion(discussion: Discussion) {
     router.navigate({ pathname: '/discussions/[id]', params: { id: String(discussion.id) } });
   }

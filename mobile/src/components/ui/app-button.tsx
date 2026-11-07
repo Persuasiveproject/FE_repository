@@ -1,13 +1,15 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { AppColors, AppSurfaces, AppTypography } from '@/constants/theme';
 
-type Props = { label: string; onPress: () => void; disabled?: boolean; selected?: boolean };
-export function AppButton({ label, onPress, disabled = false, selected = false }: Props) {
+type Props = { label: string; onPress: () => void; disabled?: boolean; selected?: boolean; loading?: boolean; variant?: 'primary' | 'secondary' };
+export function AppButton({ label, onPress, disabled = false, selected = false, loading = false, variant = 'secondary' }: Props) {
+  const filled = selected || variant === 'primary';
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled, selected }}
-      disabled={disabled} onPress={onPress}
-      style={({ pressed }) => [styles.button, selected && styles.selected, (pressed || disabled) && styles.dim]}>
-      <Text style={[styles.label, selected && styles.selectedLabel]}>{label}</Text>
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, selected, busy: loading }}
+      disabled={disabled || loading} onPress={onPress}
+      style={({ pressed }) => [styles.button, filled && styles.selected, (pressed || disabled || loading) && styles.dim]}>
+      {loading && <ActivityIndicator size="small" color={filled ? AppColors.surface : AppColors.primary} />}
+      <Text style={[styles.label, filled && styles.selectedLabel]}>{label}</Text>
     </Pressable>
   );
 }

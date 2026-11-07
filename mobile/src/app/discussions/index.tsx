@@ -9,14 +9,14 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppColors, AppLayout, AppSpacing, AppSurfaces, AppTypography } from '@/constants/theme';
 import { CategoryFilter } from '@/features/discussions/category-filter';
 import { filterDiscussions } from '@/features/discussions/filter-discussions';
-import { useResource } from '@/hooks/use-resource';
+import { useFocusResource } from '@/hooks/use-focus-resource';
 import { getDiscussions } from '@/services/discussions';
 
 export default function DiscussionListScreen() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('전체');
   const [status, setStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
-  const { resource, retry } = useResource(getDiscussions);
+  const { resource, reload: retry } = useFocusResource(getDiscussions);
   const items = resource.status === 'success' ? filterDiscussions(resource.data, query, category, status) : [];
   return <SafeAreaView style={styles.screen}>
     <View style={styles.frame}>
