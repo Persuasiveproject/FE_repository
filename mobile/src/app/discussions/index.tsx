@@ -11,8 +11,15 @@ import { CategoryFilter } from '@/features/discussions/category-filter';
 import { filterDiscussions } from '@/features/discussions/filter-discussions';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { getDiscussions } from '@/services/discussions';
+import { dataSource } from '@/services/gateway';
+import ApiListScreen from '@/features/discussions/api-list-screen';
 
 export default function DiscussionListScreen() {
+  if (dataSource === 'api') return <ApiListScreen />;
+  return <MockDiscussionListScreen />;
+}
+
+function MockDiscussionListScreen() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('전체');
   const [status, setStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');

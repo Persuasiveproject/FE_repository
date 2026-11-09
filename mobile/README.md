@@ -2,6 +2,9 @@
 
 React Native / Expo SDK 58 / TypeScript / Expo Router 앱입니다. 모든 앱 개발 명령은 이 폴더에서 실행합니다.
 
+2026-11-09: 실제 개발 서버의 **홈·카테고리·목록·상세·의견·답글 공개 조회**를 연결했습니다.
+모드 설정, 파일별 역할과 남은 기능은 [공개 조회 API 안내](docs/public-read-api-guide.md)를 확인하세요.
+
 ## 설치와 실행
 
 Node.js 24 LTS와 npm을 기준으로 확인했습니다. PowerShell에서 npm.ps1 실행 정책 오류가 발생하면 npm.cmd를 사용하세요.
@@ -30,7 +33,8 @@ iOS 네이티브 실행은 iOS 기기 또는 macOS 환경이 필요합니다. Wi
 | `npm.cmd run web` | 웹 열기 |
 | `npm.cmd run typecheck` | TypeScript 검사 |
 | `npm.cmd run lint` | ESLint 검사 |
-| `npm.cmd test` | API 오류/검색·필터/핵심 사용 흐름 19개 테스트 |
+| `npm.cmd test` | API 계약·검색·필터·핵심 사용 흐름 테스트 |
+| `npm.cmd run test:api` | 개발 서버 공개 조회·응답 형식·CORS 헤더 읽기 전용 검사 |
 | `npm.cmd run test:web` | 실행 중인 localhost:8082의 23개 경로 HTTP·SSR 검사 |
 | `npx.cmd expo export --platform all --output-dir .expo/check-export` | Android/iOS/Web 번들 검사 |
 
@@ -48,7 +52,7 @@ test:web는 브라우저에서 클릭하거나 화면을 촬영하는 테스트�
 - 참여 중·마이: 진행/종료 참여 목록, 프로필 수정, 코인 내역, 크레딧·배지, 로그아웃.
 - 툴바: main의 모바일 NativeTabs/웹 Expo Starter·Home·Explore·Docs 디자인을 유지하고 참여 중·만들기·마이만 추가.
 - /explore: 기존 Explore 항목과 화면을 그대로 유지.
-- 모든 핵심 데이터는 메모리 Mock입니다. 실제 서버 집계·추천·결제가 아니며 새로고침/재시작 시 초기화됩니다.
+- `mock` 모드는 메모리 데이터이며 새로고침/재시작 시 초기화됩니다. `api` 모드는 홈·카테고리·목록·상세·의견·답글을 실제 조회합니다. 로그인·쓰기·결과·AI 요약·결제는 실제 연결 전입니다.
 
 홈에 있던 카테고리 필터와 + 만들기 기능은 각각 검색/더보기의 목록과 하단 만들기로 옮겼습니다. 기능을 삭제하지 않았습니다.
 
@@ -96,11 +100,11 @@ docs/                          파일별 설명·BE 계약
 
 ```dotenv
 EXPO_PUBLIC_DATA_SOURCE=mock
-EXPO_PUBLIC_API_BASE_URL=https://your-api-origin.example
+EXPO_PUBLIC_API_BASE_URL=https://dev-api.yeongup.shop
 ```
 
-위 주소는 예시이며 실제 서버가 아닙니다. 공개 환경변수에 비밀값을 저장하지 마세요.
-`api` 모드는 현재 연결 준비 중 오류를 표시합니다. 서버 주소와 모드만 바꾸면 연결되는 상태가 아닙니다.
+위 주소는 팀 개발 서버입니다. 공개 환경변수에 비밀값을 저장하지 마세요.
+`api` 모드에서는 홈·토론·의견·답글 공개 조회가 연결됩니다. 웹 CORS 설정과 서버 테스트 데이터 준비가 필요합니다.
 서버에서 실제로 확인한 경로, 인증 미확정 부분, 응답 타입은 [BE 계약 문서](docs/backend-contract.md)를 확인하세요.
 
 API 연동 시 수정 위치는 다음과 같습니다.

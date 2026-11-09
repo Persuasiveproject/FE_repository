@@ -1,5 +1,9 @@
 # 핵심 화면 API 연동 안내
 
+> 2026-11-09 업데이트: 공개 홈·카테고리·토론 상세·목록·의견·답글을 별도 조회 서비스와 화면으로 연결했습니다.
+> 최신 실행법·실서버 확인 결과는 [공개 조회 API 안내](public-read-api-guide.md)를 확인하세요.
+> 아래 AppGateway와 인증·쓰기 연동 내용은 나머지 핵심 기능을 위한 준비 안내입니다.
+
 현재 모든 새 기능은 `AppGateway`라는 공통 데이터 창구를 사용합니다. 인터페이스는 FE 화면이 필요한 데이터를 정의한 것이며 확정된 BE API 명세가 아닙니다.
 확인되지 않은 URL이나 토큰 방식을 추측해 넣지 않았습니다. BE 파일은 변경하지 않았습니다.
 
@@ -18,8 +22,9 @@
 | `src/features/session/session-provider.tsx` | 프로필·세션 공유, 로그인/로그아웃 후 refresh |
 | `src/services/discussions.ts` | 기존 홈/목록 함수와 새 gateway를 연결 |
 
-기본값은 `EXPO_PUBLIC_DATA_SOURCE=mock`입니다. `api` 또는 다른 값은 INTEGRATION_PENDING 오류를 표시합니다.
-API 모드에서 Mock으로 자동 대체하지 않습니다. 현재는 실제 HTTP gateway가 없으므로 환경변수 변경만으로 연결되지 않습니다.
+기본값은 `EXPO_PUBLIC_DATA_SOURCE=mock`입니다. `api` 모드의 공개 조회는 별도 HTTP 서비스에 연결됩니다.
+그 밖의 핵심 기능과 잘못된 모드는 INTEGRATION_PENDING 오류를 표시합니다.
+API 모드에서 Mock으로 자동 대체하지 않습니다. AppGateway 전체의 HTTP 구현은 아직 없습니다.
 `EXPO_PUBLIC_API_BASE_URL`은 실제 서버 origin이며 비밀키·토큰 저장 장소가 아닙니다.
 
 ## 2. 기능별 데이터 계약

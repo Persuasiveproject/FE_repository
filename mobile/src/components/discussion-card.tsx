@@ -24,9 +24,9 @@ export function DiscussionCard({ discussion, onPress, recommended = false }: Pro
 
       <Text style={styles.title}>{discussion.title}</Text>
 
-      <Text style={styles.description}>
+      {!!discussion.description && <Text style={styles.description}>
         {discussion.description}
-      </Text>
+      </Text>}
 
       <Text style={styles.participants}>
         참여 {discussion.participants}명{discussion.opinionCount !== undefined ? `   의견 ${discussion.opinionCount}개` : ''}

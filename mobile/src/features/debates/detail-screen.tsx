@@ -13,10 +13,15 @@ import { TopicSummaryCard } from './topic-summary-card';
 import { useSession } from '@/features/session/session-provider';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { useMutation } from '@/hooks/use-mutation';
-import { gateway } from '@/services/gateway';
+import { dataSource, gateway } from '@/services/gateway';
+import ApiDetailScreen from './api-detail-screen';
 import type { Opinion, Stance } from '@/types/core';
 
 export default function DetailScreen() {
+  if (dataSource === 'api') return <ApiDetailScreen />;
+  return <DemoDetailScreen />;
+}
+function DemoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useSession();
   const loader = useCallback(async () => ({ debate: await gateway.getDebate(id), opinions: await gateway.listOpinions(id) }), [id]);

@@ -29,6 +29,8 @@ export type Opinion = {
   replyCount: number;
 };
 export type CreateDebateInput = { category: string; kind: DebateKind; durationMinutes: number; title: string; content: string };
+// 공개 API에는 실제 작성자 ID와 내 투표 상태가 없습니다. 카드 표시용 계약을 따로 둡니다.
+export type OpinionCardData = Pick<Opinion, 'id' | 'authorName' | 'stance' | 'content' | 'createdAt' | 'upvotes' | 'downvotes' | 'replyCount'> & { myVote?: Opinion['myVote'] };
 export type CreateOpinionInput = { debateId: string; parentId?: string; content: string };
 export type ChangeStanceInput = { debateId: string; stance: Stance; opinionId?: string; version: number };
 export type SignUpInput = { nickname: string; interests: string[]; termsAccepted: boolean; privacyAccepted: boolean };
