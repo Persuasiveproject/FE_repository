@@ -17,7 +17,7 @@ export default function PhoneScreen() {
     <FormField label="휴대폰 번호" value={phone} onChangeText={(value) => { setPhone(value); setChallenge(''); setCode(''); }} keyboardType="phone-pad" maxLength={13} placeholder="01000000000" />
     <AppButton label={challenge ? '데모 코드 다시 받기' : '데모 코드 받기'} disabled={!phone.trim()} loading={mutation.pending}
       onPress={() => void mutation.run(() => requestDemoCode(phone), setChallenge)} />
-    {challenge && <>
+    {!!challenge && <>
       <Notice>데모 확인 코드: 123456. 이 과정은 실제 전화번호 인증이 아닙니다.</Notice>
       <FormField label="데모 확인 코드" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={6} />
       <AppButton label="데모 확인 후 가입 폼으로" variant="primary" disabled={code.length !== 6} loading={mutation.pending}

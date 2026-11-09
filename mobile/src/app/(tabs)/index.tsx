@@ -24,7 +24,7 @@ export default function HomeScreen() {
           <AppButton label="관심 있는 주제를 검색해 보세요" onPress={() => router.navigate('/discussions')} />
           <Text accessibilityRole="header" style={styles.title}>지금, 생각이 모이는 곳</Text>
           {resource.status === 'loading' && <ResourceState kind="loading" />}
-          {resource.status === 'error' && <ResourceState kind="error" onRetry={retry} />}
+          {resource.status === 'error' && <ResourceState kind="error" message={resource.error.message} onRetry={retry} />}
           {resource.status === 'success' && <>
             <Text accessibilityRole="header" style={styles.heading}>인기 토론</Text>
             {resource.data.popular.length === 0 ? <ResourceState kind="empty" /> :

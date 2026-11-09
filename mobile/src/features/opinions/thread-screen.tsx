@@ -10,10 +10,15 @@ import { useSession } from '@/features/session/session-provider';
 import { OpinionCard } from '@/features/opinions/opinion-card';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { useMutation } from '@/hooks/use-mutation';
-import { gateway } from '@/services/gateway';
+import { dataSource, gateway } from '@/services/gateway';
+import ApiThreadScreen from './api-thread-screen';
 import type { Stance } from '@/types/core';
 
 export default function ThreadScreen() {
+  if (dataSource === 'api') return <ApiThreadScreen />;
+  return <DemoThreadScreen />;
+}
+function DemoThreadScreen() {
   const { id, opinionId } = useLocalSearchParams<{ id: string; opinionId: string }>();
   const loader = useCallback(async () => ({ debate: await gateway.getDebate(id), parent: await gateway.getOpinion(id, opinionId), replies: await gateway.listOpinions(id, opinionId) }), [id, opinionId]);
   const { resource, reload } = useFocusResource(loader);

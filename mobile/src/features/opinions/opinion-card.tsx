@@ -4,11 +4,11 @@ import { AppButton } from '@/components/ui/app-button';
 import { Caption } from '@/components/ui/content-blocks';
 import { AppColors, AppSpacing, AppSurfaces, AppTypography } from '@/constants/theme';
 import { STANCE_LABEL } from '@/features/core/rules';
-import type { Opinion, Stance } from '@/types/core';
+import type { OpinionCardData, Stance } from '@/types/core';
 
 export const STANCE_COLOR: Record<Stance, string> = { PRO: '#3B82F6', CON: '#CB642B', NEUTRAL: '#7A8599' };
 type Props = {
-  item: Opinion;
+  item: OpinionCardData;
   disabled?: boolean;
   canVote?: boolean;
   onOpen?: () => void;
