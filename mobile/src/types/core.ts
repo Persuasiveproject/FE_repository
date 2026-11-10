@@ -47,5 +47,5 @@ export type DebateResults = {
   computedAt: string;
   demographics: null;
 };
-export type Summary = { generatedAt: string; sections: { title: string; text: string; opinionIds: string[] }[] };
+export type Summary = { generatedAt: string | null; sections: { title: string; text: string; opinionIds: string[] }[] };
 export type Wallet = { balance: number; transactions: { id: string; label: string; amount: number; createdAt: string }[] };

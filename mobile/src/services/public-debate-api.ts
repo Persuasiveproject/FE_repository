@@ -2,7 +2,7 @@ import { apiRequest, ApiError } from './api-client.ts';
 import { count, id, invalidResponse, nextCursor, nullableTime, record, routeId, string, timestamp } from './api-values.ts';
 import { getPublicCategories, parsePublicDebateItems, toDiscussion } from './public-api.ts';
 import type { PublicDetailDto, PublicHomeDto, PublicPostDto, PublicPostPage, PublicPostQuery } from '../types/api';
-import type { OpinionCardData } from '../types/core';
+import type { OpinionCardData, Summary } from '../types/core';
 import type { HomeFeed } from '../types/discussion';
 
 export function parsePublicHome(value: unknown): PublicHomeDto {
@@ -116,4 +116,29 @@ export async function getPublicThread(debateId: string, parentId: string, cursor
 export function appendPostPage(items: PublicPostDto[], page: PublicPostPage, requested: string[]): PublicPostDto[] {
   if (page.nextCursor !== null && requested.includes(page.nextCursor)) invalidResponse();
   return [...new Map([...items, ...page.items].map((item) => [item.postId, item])).values()];
+}
+
+// API 43: PRO/CON별 최신 AI 요약. 요약이 아직 없으면 sections가 빈 배열이다.
+const summaryTitles = { PRO: '찬성 핵심 근거', CON: '반대 핵심 근거' } as const;
+export function parsePublicSummary(value: unknown): Summary {
+  const data = record(record(value).data);
+  if (!Array.isArray(data.summaries)) invalidResponse();
+  const sections = data.summaries.map((entry) => {
+    const item = record(entry);
+    if (item.stance !== 'PRO' && item.stance !== 'CON') invalidResponse();
+    if (!Array.isArray(item.sourcePostIds)) invalidResponse();
+    return {
+      stance: item.stance as 'PRO' | 'CON', createdAt: timestamp(item.createdAt),
+      title: summaryTitles[item.stance as 'PRO' | 'CON'], text: string(item.summaryText),
+      opinionIds: item.sourcePostIds.map(id),
+    };
+  });
+  if (new Set(sections.map((s) => s.stance)).size !== sections.length) invalidResponse();
+  const generatedAt = sections.map((s) => s.createdAt).sort().at(-1) ?? null;
+  return { generatedAt, sections: sections.map(({ title, text, opinionIds }) => ({ title, text, opinionIds })) };
+}
+export async function getPublicSummary(debateId: string, signal?: AbortSignal): Promise<Summary> {
+  const key = routeId(debateId);
+  try { return parsePublicSummary(await apiRequest<unknown>(`/v1/debates/${key}/summary`, { auth: 'public', signal })); }
+  catch (error) { return readError(error); }
 }
