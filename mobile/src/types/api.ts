@@ -1,5 +1,41 @@
 export type ApiErrorBody = { error: { code: string; message: string; details?: unknown } };
 
+export type UserProfileDto = {
+  id: string;
+  nickname: string;
+  coinBalance: number;
+  credit: string;
+  identityVerified: boolean;
+  interests: CategoryDto[];
+  badges: BadgeAwardDto[];
+};
+// 상세 계약안은 BadgeAward 필드 전체를 열거하지 않아 확정된 식별자만 둡니다.
+export type BadgeAwardDto = { id: string };
+export type GetMeResponse = { data: UserProfileDto };
+
+export type CreateDebateRequest = {
+  categoryId: string;
+  kind: 'ENDLESS' | 'QUICK';
+  title: string;
+  content: string;
+  durationMinutes: number | null;
+};
+export type CreateDebateResponse = { data: { debateId: string; status: 'DRAFT'; createdAt: string } };
+
+export type SelectStanceRequest = {
+  stance: 'PRO' | 'CON' | 'NEUTRAL';
+  opinionId?: string;
+  version?: number;
+};
+export type SelectStanceResponse = { data: { currentStance: 'PRO' | 'CON' | 'NEUTRAL'; eventId: string; persuasionId: string | null; reward: unknown | null } };
+
+export type CreateOpinionRequest = { content: string; parentId?: string; references?: { url: string }[] };
+export type CreatedReferenceDto = { referenceId: string; status: 'PENDING' | 'SAFE' | 'UNSAFE'; url: string | null };
+export type CreateOpinionResponse = { data: {
+  postId: string; stanceAtWrite: 'PRO' | 'CON' | 'NEUTRAL'; status: 'VISIBLE' | 'FILTERED' | 'DELETED';
+  createdAt: string; references: CreatedReferenceDto[];
+} };
+
 // BE develop e72c8a4의 JoinedDebateSerializer 기준입니다. UI Discussion과 구분합니다.
 export type JoinedDebateDto = {
   id: string;
