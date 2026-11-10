@@ -17,8 +17,10 @@ type Options = {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
   signal?: AbortSignal;
-  // 로그인 방식 미확정: 인증 API는 별도 인증 준비가 완료되기 전 네트워크로 보내지 않습니다.
+  idempotencyKey?: string;
+  // 인증 요청은 호출자가 제공한 access token으로 보냅니다.
   auth: 'public' | 'required';
+  accessToken?: string;
 };
 
 function isErrorBody(value: unknown): value is ApiErrorBody {
@@ -28,11 +30,10 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
     'message' in error && typeof error.message === 'string';
 }
 
-// 토큰·쿠키·CSRF 방식은 BE 로그인 계약 확정 후 추가합니다. Bearer라고 가정하지 않습니다.
+// 인증이 필요한 요청은 호출자가 access token을 전달해야 합니다.
 export async function apiRequest<T>(path: string, options: Options): Promise<T> {
-  if (options.auth === 'required') {
-    throw new ApiError(0, 'AUTH_NOT_CONFIGURED', '로그인 연동을 먼저 설정해 주세요.');
-  }
+  const accessToken = options.accessToken?.trim();
+  if (options.auth === 'required' && !accessToken) throw new ApiError(0, 'AUTH_NOT_CONFIGURED', '로그인 연동을 먼저 설정해 주세요.');
   const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
   if (!baseUrl) throw new ApiError(0, 'API_NOT_CONFIGURED', 'API 서버 주소가 설정되지 않았습니다.');
   if (!/^https?:\/\//i.test(baseUrl) || !path.startsWith('/') || path.startsWith('//') || path.includes('://')) {
@@ -42,7 +43,9 @@ export async function apiRequest<T>(path: string, options: Options): Promise<T> 
   try {
     response = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, {
       method: options.method ?? 'GET', signal: options.signal, credentials: 'omit',
-      headers: { Accept: 'application/json', ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      headers: { Accept: 'application/json', ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(options.auth === 'required' ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(options.idempotencyKey === undefined ? {} : { 'Idempotency-Key': options.idempotencyKey }) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
   } catch (error) {
