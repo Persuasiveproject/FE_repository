@@ -1,5 +1,7 @@
 # 영업중 HM-100 홈 및 프런트엔드 기반 개선
 
+> 2026-11-11 현재 실제 인증·쓰기 연결은 [시연 안내](demo-basic-auth.md), 요약·시간·이력·알림·초안은 [추가 API 안내](remaining-api-guide.md)를 확인하세요.
+
 > 핵심 화면 후속 구현은 [core-screens-guide.md](core-screens-guide.md), [API 연동 안내](core-api-integration.md)를 확인하세요.
 > 아래 내용은 홈 기반 작업 당시 기록입니다. 현재 상세·생성·참여 중·마이는 데모 기능 화면으로 교체되었습니다.
 

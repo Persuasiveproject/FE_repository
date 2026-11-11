@@ -31,7 +31,7 @@ test('서버 주소 누락과 미설정 인증은 네트워크 요청 전에 차
   delete process.env.EXPO_PUBLIC_API_BASE_URL;
   globalThis.fetch = async () => { throw new Error('네트워크에 도달하면 안 됨'); };
   await assert.rejects(apiRequest('/v1/test', { auth: 'public' }), { code: 'API_NOT_CONFIGURED' });
-  await assert.rejects(apiRequest('/v1/me/debates', { auth: 'required' }), { code: 'AUTH_NOT_CONFIGURED' });
+  await assert.rejects(apiRequest('/v1/me/debates', { auth: 'required' }), { code: 'AUTH_REQUIRED' });
 });
 
 test('공개 요청에는 쿠키를 보내지 않고 Base URL과 JSON을 처리한다', async () => {

@@ -11,15 +11,17 @@ type Props = {
   item: OpinionCardData;
   disabled?: boolean;
   canVote?: boolean;
+  canPersuade?: boolean;
   onOpen?: () => void;
   onReply?: () => void;
   onVote?: (vote: 'UP' | 'DOWN') => void;
   onPersuaded?: () => void;
   repliesExpanded?: boolean;
 };
-export function OpinionCard({ item, disabled, canVote, onOpen, onReply, onVote, onPersuaded, repliesExpanded = false }: Props) {
+export function OpinionCard({ item, disabled, canVote, canPersuade = canVote, onOpen, onReply, onVote, onPersuaded, repliesExpanded = false }: Props) {
   const [reportOpen, setReportOpen] = useState(false);
   const voteDisabled = !!disabled || !canVote;
+  const persuadeDisabled = !!disabled || !canPersuade;
   // 원래의 투표 전환/취소 로직은 유지하고, 두 수의 차이를 현재 표수로 보여 줍니다.
   const score = item.upvotes - item.downvotes;
   return <View style={[styles.card, { borderColor: STANCE_COLOR[item.stance] }]}>
@@ -47,8 +49,8 @@ export function OpinionCard({ item, disabled, canVote, onOpen, onReply, onVote, 
         </Pressable>
       </View>}
       <View style={styles.rightActions}>
-        {onPersuaded && <Pressable accessibilityRole="button" accessibilityLabel="영업 · 이 의견에 설득됐어요" accessibilityState={{ disabled: voteDisabled }}
-          disabled={voteDisabled} onPress={onPersuaded} style={({ pressed }) => [styles.action, (pressed || voteDisabled) && styles.dim]}>
+        {onPersuaded && <Pressable accessibilityRole="button" accessibilityLabel="영업 · 이 의견에 설득됐어요" accessibilityState={{ disabled: persuadeDisabled }}
+          disabled={persuadeDisabled} onPress={onPersuaded} style={({ pressed }) => [styles.action, (pressed || persuadeDisabled) && styles.dim]}>
           <Text style={styles.actionLabel}>영업</Text>
         </Pressable>}
         {(onOpen || onReply) && <Pressable accessibilityRole="button"

@@ -1,16 +1,22 @@
-import type { ChangeStanceInput, CreateDebateInput, CreateOpinionInput, Debate, DebateResults, Membership, Opinion, Profile, SignUpInput, Stance, Summary, Wallet } from '../types/core';
+import type { ChangeStanceInput, CreateDebateInput, CreateOpinionInput, Debate, DebateResults, JoinedDebateCard, Membership, Opinion, Profile, SavedDraft, SignUpInput, Stance, Summary, Wallet } from '../types/core';
+import type { BasicCredentials } from './basic-auth';
 
-// UI가 사용하는 계약. BE의 URL/DTO 확정 후 같은 인터페이스의 HTTP 구현으로 교체합니다.
+// 화면용 계약입니다. mock/http 구현은 gateway.ts 한 곳에서 선택합니다.
 export interface AppGateway {
   getSession(): Promise<Profile | null>;
   signInDemo(): Promise<Profile>;
+  signInBasic?(credentials: BasicCredentials): Promise<Profile>;
   signUpDemo(input: SignUpInput): Promise<Profile>;
   signOut(): Promise<void>;
   updateProfile(input: Pick<Profile, 'nickname' | 'interests'>): Promise<Profile>;
   listDebates(): Promise<Debate[]>;
   getDebate(id: string): Promise<Debate>;
-  listJoined(status: 'OPEN' | 'CLOSED'): Promise<Debate[]>;
+  listJoined(status: 'OPEN' | 'CLOSED'): Promise<JoinedDebateCard[]>;
   createDebate(input: CreateDebateInput, requestId: string): Promise<Debate>;
+  saveDraft?(input: CreateDebateInput, requestId: string, draftId?: string): Promise<SavedDraft>;
+  getDraft?(draftId: string): Promise<SavedDraft>;
+  getSavedDrafts?(): SavedDraft[];
+  publishDraft?(draftId: string, input: CreateDebateInput): Promise<Debate>;
   joinDebate(id: string, stance: Stance): Promise<Membership>;
   listOpinions(debateId: string, parentId?: string): Promise<Opinion[]>;
   getOpinion(debateId: string, opinionId: string): Promise<Opinion>;

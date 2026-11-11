@@ -33,6 +33,7 @@ export type PublicDetailDto = {
   category: CategoryDto; createdAt: string; startedAt: string | null; endsAt: string | null;
   closedAt: string | null; canceledAt: string | null; participantCount: number;
   durationMinutes: number | null;
+  myParticipation: import('./core').Membership | null;
 };
 export type PublicPostDto = {
   postId: string; debateId: string; parentId: string | null; rootId: string | null;

@@ -12,7 +12,7 @@ export function createMockGateway(options: { enabled?: boolean; now?: () => numb
   const now = options.now ?? Date.now;
   const iso = () => new Date(now()).toISOString();
   let session: Profile | null = null;
-  let profile: Profile = { id: 'demo-user', nickname: '생각하는 사람', interests: ['기술'], coins: 10, credit: 30, badge: '대화의 시작' };
+  let profile: Profile & { coins: number; credit: number } = { id: 'demo-user', nickname: '생각하는 사람', interests: ['기술'], coins: 10, credit: 30, badge: '대화의 시작' };
   let sequence = 100;
   const debates: Debate[] = mockDiscussions.map((item) => ({ ...clone(item), id: String(item.id),
     status: 'OPEN', type: 'ENDLESS', creatorId: 'seed-author',

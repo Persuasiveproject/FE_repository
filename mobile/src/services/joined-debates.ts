@@ -1,7 +1,7 @@
 import { apiRequest } from './api-client';
 import type { JoinedDebatesQuery, JoinedDebatesResponse } from '../types/api';
 
-// 존재하는 경로만 선언합니다. 현재 auth 가드로 차단되며 홈에는 연결하지 않습니다.
+// 개인 참여 목록 요청입니다. 메모리 인증정보가 없으면 AUTH_REQUIRED로 차단합니다.
 export function getJoinedDebates(query: JoinedDebatesQuery = {}, signal?: AbortSignal) {
   const search = new URLSearchParams();
   if (query.status) search.set('status', query.status);

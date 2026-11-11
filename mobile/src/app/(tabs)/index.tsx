@@ -1,4 +1,7 @@
 import { router } from 'expo-router';
+import { useCallback } from 'react';
+import { useSession } from '@/features/session/session-provider';
+import { withAuthRevision } from '@/services/basic-auth';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,7 +15,9 @@ import { getHomeFeed } from '@/services/discussions';
 import type { Discussion } from '@/types/discussion';
 
 export default function HomeScreen() {
-  const { resource, reload: retry } = useFocusResource(getHomeFeed);
+  const { revision } = useSession();
+  const loader = useCallback(() => withAuthRevision(revision, getHomeFeed), [revision]);
+  const { resource, reload: retry } = useFocusResource(loader);
   function openDiscussion(discussion: Discussion) {
     router.navigate({ pathname: '/discussions/[id]', params: { id: String(discussion.id) } });
   }

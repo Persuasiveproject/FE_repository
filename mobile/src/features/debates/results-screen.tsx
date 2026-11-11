@@ -9,7 +9,7 @@ import { STANCES, STANCE_LABEL } from '@/features/core/rules';
 import { TransitionChart } from './transition-chart';
 import { STANCE_COLOR } from '@/features/opinions/opinion-card';
 import { useFocusResource } from '@/hooks/use-focus-resource';
-import { gateway } from '@/services/gateway';
+import { dataSource, gateway } from '@/services/gateway';
 
 export default function ResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,7 +17,7 @@ export default function ResultsScreen() {
   const { resource, reload } = useFocusResource(loader);
   return <Page title="최종 통계" footer={<AppButton label="토론 내용 다시보기" onPress={() => router.replace({ pathname: '/discussions/[id]', params: { id } })} />}>
     <ResourceContent resource={resource} reload={reload}>{({ debate, results }) => <>
-      <Panel><Caption>토론 종료 · 데모 집계</Caption><Heading>{debate.title}</Heading><Body>토론이 종료되어 투표와 입장 변경이 마감되었습니다.</Body></Panel>
+      <Panel><Caption>{dataSource === 'api' ? '토론 종료 · 서버 집계' : '토론 종료 · 데모 집계'}</Caption><Heading>{debate.title}</Heading><Body>토론이 종료되어 투표와 입장 변경이 마감되었습니다.</Body></Panel>
       <Panel><Body>누적 참여자 {results.total}명</Body><Body>의견 {results.opinionCount}개 · 답글 {results.replyCount}개</Body></Panel>
       <Panel><Heading>토론 전후, 입장은 어떻게 달라졌을까요?</Heading>
         {results.transitions.length > 0 ? <TransitionChart transitions={results.transitions} total={results.total} /> : <Notice>개인정보 보호 또는 집계 데이터 부족으로 입장 변화 흐름을 표시하지 않습니다.</Notice>}

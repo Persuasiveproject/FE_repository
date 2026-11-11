@@ -2,17 +2,21 @@ import { apiRequest, ApiError } from './api-client.ts';
 import { count, id, invalidResponse, nextCursor, nullableTime, record, routeId, string, timestamp } from './api-values.ts';
 import { getPublicCategories, parsePublicDebateItems, toDiscussion } from './public-api.ts';
 import type { PublicDetailDto, PublicHomeDto, PublicPostDto, PublicPostPage, PublicPostQuery } from '../types/api';
-import type { OpinionCardData } from '../types/core';
+import type { OpinionCardData, Summary } from '../types/core';
 import type { HomeFeed } from '../types/discussion';
+import { parseMembership } from './http-models.ts';
+import { getAuthRevision, subscribeBasicAuth } from './basic-auth.ts';
 
 export function parsePublicHome(value: unknown): PublicHomeDto {
   const data = record(record(value).data);
   return { popularDebates: parsePublicDebateItems(data.popularDebates), recommendedDebates: parsePublicDebateItems(data.recommendedDebates) };
 }
 export async function getPublicHomeFeed(signal?: AbortSignal): Promise<HomeFeed> {
+  const revision = getAuthRevision();
   const [response, categories] = await Promise.all([
-    apiRequest<unknown>('/v1/home', { auth: 'public', signal }), getPublicCategories(signal),
+    apiRequest<unknown>('/v1/home', { auth: 'optional', signal }), getPublicCategories(signal),
   ]);
+  if (revision !== getAuthRevision()) throw new ApiError(0, 'SESSION_CHANGED', '계정이 변경되었습니다. 홈을 다시 열어 주세요.');
   const data = parsePublicHome(response);
   return { popular: data.popularDebates.map((item) => toDiscussion(item, categories)), recommended: data.recommendedDebates.map((item) => toDiscussion(item, categories)) };
 }
@@ -31,6 +35,7 @@ export function parsePublicDetail(value: unknown): PublicDetailDto {
     createdAt: timestamp(item.createdAt), startedAt: nullableTime(item.startedAt), endsAt: nullableTime(item.endsAt),
     closedAt: nullableTime(item.closedAt), canceledAt: nullableTime(item.canceledAt), participantCount: participants,
     durationMinutes: item.durationMinutes === null ? null : count(item.durationMinutes),
+    myParticipation: data.myParticipation === null ? null : parseMembership(data.myParticipation),
   };
 }
 
@@ -60,6 +65,7 @@ export function parsePublicPosts(value: unknown, debateId: string, parentId?: st
 // 전체 글을 다시 훑지 않고 방금 목록에서 본 원문을 전체 답글 화면에도 표시합니다.
 // #31은 replies만 반환합니다. 직접 주소를 열어 캐시가 없으면 원문을 만들어 표시하지 않습니다.
 const recentPosts = new Map<string, PublicPostDto>();
+subscribeBasicAuth(() => recentPosts.clear());
 function rememberPosts(items: PublicPostDto[]) {
   for (const item of items) {
     recentPosts.delete(item.postId); recentPosts.set(item.postId, item);
@@ -89,7 +95,7 @@ function readError(error: unknown): never {
 export async function getPublicDetail(debateId: string, signal?: AbortSignal): Promise<PublicDetailDto> {
   const key = routeId(debateId);
   try {
-    const item = parsePublicDetail(await apiRequest<unknown>(`/v1/debates/${key}`, { auth: 'public', signal }));
+    const item = parsePublicDetail(await apiRequest<unknown>(`/v1/debates/${key}`, { auth: 'optional', signal }));
     if (item.id !== key) invalidResponse();
     return item;
   } catch (error) { return readError(error); }
@@ -116,4 +122,30 @@ export async function getPublicThread(debateId: string, parentId: string, cursor
 export function appendPostPage(items: PublicPostDto[], page: PublicPostPage, requested: string[]): PublicPostDto[] {
   if (page.nextCursor !== null && requested.includes(page.nextCursor)) invalidResponse();
   return [...new Map([...items, ...page.items].map((item) => [item.postId, item])).values()];
+}
+
+// API 43: PRO/CON별 최신 AI 요약. 요약이 아직 없으면 sections가 빈 배열이다.
+const summaryTitles = { PRO: '찬성 핵심 근거', CON: '반대 핵심 근거' } as const;
+export function parsePublicSummary(value: unknown): Summary {
+  const data = record(record(value).data);
+  if (!Array.isArray(data.summaries)) invalidResponse();
+  const sections = data.summaries.map((entry) => {
+    const item = record(entry);
+    if (item.stance !== 'PRO' && item.stance !== 'CON') invalidResponse();
+    if (!Array.isArray(item.sourcePostIds)) invalidResponse();
+    return {
+      stance: item.stance as 'PRO' | 'CON', createdAt: timestamp(item.createdAt),
+      title: summaryTitles[item.stance as 'PRO' | 'CON'], text: string(item.summaryText),
+      opinionIds: [...new Set(item.sourcePostIds.map(id))],
+    };
+  });
+  if (new Set(sections.map((s) => s.stance)).size !== sections.length) invalidResponse();
+  // 소수점 유무가 다른 ISO 문자열도 실제 시각으로 비교합니다.
+  const generatedAt = sections.reduce<string | null>((latest, section) => latest === null || Date.parse(section.createdAt) > Date.parse(latest) ? section.createdAt : latest, null);
+  return { generatedAt, sections: sections.map(({ title, text, opinionIds, createdAt }) => ({ title, text, opinionIds, generatedAt: createdAt })) };
+}
+export async function getPublicSummary(debateId: string, signal?: AbortSignal): Promise<Summary> {
+  const key = routeId(debateId);
+  try { return parsePublicSummary(await apiRequest<unknown>(`/v1/debates/${key}/summary`, { auth: 'public', signal })); }
+  catch (error) { return readError(error); }
 }

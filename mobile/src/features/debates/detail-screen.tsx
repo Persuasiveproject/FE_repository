@@ -40,7 +40,7 @@ function DemoDetailScreen() {
       const visible = opinions.filter((item) => filter === 'ALL' || item.stance === filter).sort((a, b) => sort === 'popular' ? b.upvotes - a.upvotes : b.createdAt.localeCompare(a.createdAt));
       return <>
         <TopicSummaryCard remaining={remainingTime(debate.endsAt, now)} title={debate.title} description={debate.description} />
-        <Caption>{debate.category} · 참여 {debate.participants}명 · 마감 {new Date(debate.endsAt).toLocaleString('ko-KR')}</Caption>
+        <Caption>{debate.category} · 참여 {debate.participants}명 · 마감 {debate.endsAt ? new Date(debate.endsAt).toLocaleString('ko-KR') : '미정'}</Caption>
         {debate.membership && <Panel><Body>최초 입장 · {STANCE_LABEL[debate.membership.initialStance]}</Body>
           <Body>내 입장 · {STANCE_LABEL[debate.membership.currentStance]}</Body></Panel>}
         {!profile && <AppButton label="로그인하고 참여하기" onPress={() => router.navigate('/auth/login')} />}
