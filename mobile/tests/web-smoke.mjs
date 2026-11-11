@@ -9,6 +9,8 @@ const cases = [
   ['/discussions/2', '토론'],
   ['/discussions/ai-class', '토론'],
   ['/discussions/create', '토론 만들기'],
+  ['/discussions/create?draftId=1', '토론 만들기'],
+  ['/discussions/drafts', '저장한 초안'],
   ['/joined', '참여 중'],
   ['/my', '마이'],
   ['/explore', 'Explore'],
@@ -23,9 +25,11 @@ const cases = [
   ['/discussions/closed-demo', '토론'],
   ['/discussions/closed-demo/results', '최종 통계'],
   ['/discussions/ai-class/summary', 'AI 요약'],
+  ['/discussions/1/events', '내 입장 변경 이력'],
   ['/account/profile', '프로필 수정'],
   ['/account/coins', '코인 관리'],
   ['/account/credits', '크레딧과 배지'],
+  ['/account/notifications', '알림'],
 ];
 for (const [path, title] of cases) {
   const response = await fetch(`${base}${path}`);

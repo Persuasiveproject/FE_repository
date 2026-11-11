@@ -9,10 +9,15 @@ import { Body, ErrorNotice, Notice, Panel } from '@/components/ui/content-blocks
 import { isClosed, LIMITS, STANCE_LABEL, validateOpinion } from '@/features/core/rules';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { useMutation } from '@/hooks/use-mutation';
-import { gateway } from '@/services/gateway';
+import { dataSource, gateway } from '@/services/gateway';
 import type { Debate, Opinion } from '@/types/core';
+import { useSession } from '@/features/session/session-provider';
 
 export default function ComposeScreen({ reply = false }: { reply?: boolean }) {
+  const { revision } = useSession();
+  return <ComposeContent key={revision} reply={reply} />;
+}
+function ComposeContent({ reply = false }: { reply?: boolean }) {
   const { id, opinionId } = useLocalSearchParams<{ id: string; opinionId?: string }>();
   const loader = useCallback(async () => ({ debate: await gateway.getDebate(id), parent: reply && opinionId ? await gateway.getOpinion(id, opinionId) : null }), [id, opinionId, reply]);
   const { resource, reload } = useFocusResource(loader);
@@ -24,7 +29,7 @@ function ComposeForm({ debate, parent, reply }: { debate: Debate; parent: Opinio
   const [content, setContent] = useState('');
   const [requestId] = useState(() => `opinion-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const mutation = useMutation();
-  if (isClosed(debate)) return <Notice>종료된 토론에는 글을 작성할 수 없습니다.</Notice>;
+  if (dataSource === 'api' ? debate.status === 'CLOSED' : isClosed(debate)) return <Notice>종료된 토론에는 글을 작성할 수 없습니다.</Notice>;
   if (!debate.membership) return <><Notice>입장을 선택하고 토론에 참여한 뒤 의견을 남길 수 있습니다.</Notice>
     <AppButton label="입장 선택" onPress={() => router.navigate({ pathname: '/discussions/[id]/join', params: { id: debate.id } })} /></>;
   if (reply && !parent) return <Notice>답글을 작성할 원래 의견을 찾을 수 없습니다.</Notice>;

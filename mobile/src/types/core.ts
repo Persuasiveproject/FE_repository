@@ -3,21 +3,22 @@ import type { Discussion } from './discussion';
 // 화면에서 사용하는 모델입니다. 아직 미확정인 API DTO로 간주하지 않습니다.
 export type Stance = 'PRO' | 'CON' | 'NEUTRAL';
 export type DebateKind = 'QUICK' | 'ENDLESS';
-export type Profile = { id: string; nickname: string; interests: string[]; coins: number; credit: number; badge: string };
-export type Membership = { initialStance: Stance; currentStance: Stance; version: number };
+export type Profile = { id: string; nickname: string; interests: string[]; coins: number | null; credit: number | string; badge: string };
+export type Membership = { initialStance: Stance; currentStance: Stance; version: number; anonymousNo?: number; participantId?: string };
 export type Debate = Discussion & {
   id: string;
   status: 'OPEN' | 'CLOSED';
   type: DebateKind;
-  creatorId: string;
-  endsAt: string;
+  creatorId?: string;
+  endsAt: string | null;
   createdAt: string;
   membership: Membership | null;
 };
 export type Opinion = {
   id: string;
   debateId: string;
-  authorId: string;
+  authorId?: string;
+  anonymousNo?: number;
   authorName: string;
   stance: Stance;
   content: string;
@@ -25,7 +26,7 @@ export type Opinion = {
   createdAt: string;
   upvotes: number;
   downvotes: number;
-  myVote: 'UP' | 'DOWN' | null;
+  myVote?: 'UP' | 'DOWN' | null;
   replyCount: number;
 };
 export type CreateDebateInput = { category: string; kind: DebateKind; durationMinutes: number; title: string; content: string };
@@ -47,5 +48,8 @@ export type DebateResults = {
   computedAt: string;
   demographics: null;
 };
-export type Summary = { generatedAt: string; sections: { title: string; text: string; opinionIds: string[] }[] };
+export type Summary = { generatedAt: string | null; sections: { title: string; text: string; opinionIds: string[]; generatedAt?: string }[] };
+export type SavedDraft = { id: string; categoryId: string; input: CreateDebateInput; createdAt: string };
 export type Wallet = { balance: number; transactions: { id: string; label: string; amount: number; createdAt: string }[] };
+export type JoinedDebateCard = Discussion & { id: string; membership?: Membership | null };
+export function creditLabel(value: Profile['credit'] | undefined): string { return typeof value === 'number' ? value.toFixed(1) : value ?? '확인 전'; }

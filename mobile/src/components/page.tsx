@@ -11,7 +11,7 @@ export function Page({ title, children, back = true, footer, demo = true, tab = 
     <KeyboardAvoidingView style={styles.frame} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScreenHeader title={title} back={back} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
-        {demo && <Text style={styles.demo}>{dataSource === 'mock' ? '데모 모드 · 데이터는 이 앱 실행 중에만 유지됩니다.' : 'API 모드 · 홈·토론·의견 조회 / 로그인·참여 기능 준비 중'}</Text>}
+        {demo && <Text style={styles.demo}>{dataSource === 'mock' ? '데모 모드 · 데이터는 이 앱 실행 중에만 유지됩니다.' : '실제 개발 서버 · 시연용 Basic 인증'}</Text>}
         {children}
       </ScrollView>
       {footer && <View style={styles.footer}>{footer}</View>}

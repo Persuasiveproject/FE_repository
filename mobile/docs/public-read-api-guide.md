@@ -1,5 +1,7 @@
 # 홈·토론·의견 API 조회 안내
 
+> 이 문서는 2026-11-09 공개 조회 단계의 기록입니다. 현재 시연용 Basic 인증·쓰기·결과 연결은 [최신 시연 안내](demo-basic-auth.md)를 확인하세요.
+
 확인일: 2026-11-09. 작업 브랜치: `feat/public-api-integration`.
 서버: <https://dev-api.yeongup.shop>.
 BE 확인 기준: `develop`의 `66685e5454dd198f112a6e150ee31163574934c9`.

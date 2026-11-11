@@ -4,15 +4,19 @@ import { getPublicCategories, parsePublicDebateItems, toDiscussion } from './pub
 import type { PublicDetailDto, PublicHomeDto, PublicPostDto, PublicPostPage, PublicPostQuery } from '../types/api';
 import type { OpinionCardData } from '../types/core';
 import type { HomeFeed } from '../types/discussion';
+import { parseMembership } from './http-models.ts';
+import { getAuthRevision, subscribeBasicAuth } from './basic-auth.ts';
 
 export function parsePublicHome(value: unknown): PublicHomeDto {
   const data = record(record(value).data);
   return { popularDebates: parsePublicDebateItems(data.popularDebates), recommendedDebates: parsePublicDebateItems(data.recommendedDebates) };
 }
 export async function getPublicHomeFeed(signal?: AbortSignal): Promise<HomeFeed> {
+  const revision = getAuthRevision();
   const [response, categories] = await Promise.all([
-    apiRequest<unknown>('/v1/home', { auth: 'public', signal }), getPublicCategories(signal),
+    apiRequest<unknown>('/v1/home', { auth: 'optional', signal }), getPublicCategories(signal),
   ]);
+  if (revision !== getAuthRevision()) throw new ApiError(0, 'SESSION_CHANGED', '계정이 변경되었습니다. 홈을 다시 열어 주세요.');
   const data = parsePublicHome(response);
   return { popular: data.popularDebates.map((item) => toDiscussion(item, categories)), recommended: data.recommendedDebates.map((item) => toDiscussion(item, categories)) };
 }
@@ -31,6 +35,7 @@ export function parsePublicDetail(value: unknown): PublicDetailDto {
     createdAt: timestamp(item.createdAt), startedAt: nullableTime(item.startedAt), endsAt: nullableTime(item.endsAt),
     closedAt: nullableTime(item.closedAt), canceledAt: nullableTime(item.canceledAt), participantCount: participants,
     durationMinutes: item.durationMinutes === null ? null : count(item.durationMinutes),
+    myParticipation: data.myParticipation === null ? null : parseMembership(data.myParticipation),
   };
 }
 
@@ -60,6 +65,7 @@ export function parsePublicPosts(value: unknown, debateId: string, parentId?: st
 // 전체 글을 다시 훑지 않고 방금 목록에서 본 원문을 전체 답글 화면에도 표시합니다.
 // #31은 replies만 반환합니다. 직접 주소를 열어 캐시가 없으면 원문을 만들어 표시하지 않습니다.
 const recentPosts = new Map<string, PublicPostDto>();
+subscribeBasicAuth(() => recentPosts.clear());
 function rememberPosts(items: PublicPostDto[]) {
   for (const item of items) {
     recentPosts.delete(item.postId); recentPosts.set(item.postId, item);
@@ -89,7 +95,7 @@ function readError(error: unknown): never {
 export async function getPublicDetail(debateId: string, signal?: AbortSignal): Promise<PublicDetailDto> {
   const key = routeId(debateId);
   try {
-    const item = parsePublicDetail(await apiRequest<unknown>(`/v1/debates/${key}`, { auth: 'public', signal }));
+    const item = parsePublicDetail(await apiRequest<unknown>(`/v1/debates/${key}`, { auth: 'optional', signal }));
     if (item.id !== key) invalidResponse();
     return item;
   } catch (error) { return readError(error); }

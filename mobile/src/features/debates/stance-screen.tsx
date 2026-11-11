@@ -10,10 +10,14 @@ import { isClosed, STANCES, STANCE_LABEL } from '@/features/core/rules';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { useMutation } from '@/hooks/use-mutation';
 import { useSession } from '@/features/session/session-provider';
-import { gateway } from '@/services/gateway';
+import { dataSource, gateway } from '@/services/gateway';
 import type { Debate, Opinion, Stance } from '@/types/core';
 
 export default function StanceScreen({ mode }: { mode: 'join' | 'change' }) {
+  const { revision } = useSession();
+  return <StanceContent key={revision} mode={mode} />;
+}
+function StanceContent({ mode }: { mode: 'join' | 'change' }) {
   const { id, opinionId } = useLocalSearchParams<{ id: string; opinionId?: string }>();
   const loader = useCallback(async () => {
     const debate = await gateway.getDebate(id);
@@ -32,7 +36,7 @@ function StanceForm({ debate, opinions, mode, selectedOpinionId, reload }: { deb
   const [source, setSource] = useState(selectedOpinionId ?? '');
   const mutation = useMutation();
   const { profile } = useSession();
-  const closed = isClosed(debate);
+  const closed = dataSource === 'api' ? debate.status === 'CLOSED' : isClosed(debate);
   function openRoom() { router.replace({ pathname: '/discussions/[id]', params: { id: debate.id } }); }
   if (closed) return <><Notice>종료된 토론에서는 입장을 선택하거나 변경할 수 없습니다.</Notice><AppButton label="토론 보기" onPress={openRoom} /></>;
   if (mode === 'change' && !debate.membership) return <><Notice>먼저 토론에 참여해 주세요.</Notice><AppButton label="입장 선택" onPress={() => router.replace({ pathname: '/discussions/[id]/join', params: { id: debate.id } })} /></>;
@@ -56,6 +60,6 @@ function StanceForm({ debate, opinions, mode, selectedOpinionId, reload }: { deb
     <AppButton label={mode === 'join' ? '이 입장으로 참여하기' : '입장 변경'} variant="primary" loading={mutation.pending}
       disabled={!stance || (mode === 'change' && stance === debate.membership?.currentStance)}
       onPress={() => { if (!stance) return; void mutation.run(() => mode === 'join' ? gateway.joinDebate(debate.id, stance) : gateway.changeStance({ debateId: debate.id, stance, opinionId: source || undefined, version: debate.membership!.version }), openRoom); }} />
-    {mutation.error && <AppButton label="최신 상태 다시 불러오기" onPress={reload} />}
+    {!!mutation.error && <AppButton label="최신 상태 다시 불러오기" onPress={reload} />}
   </>;
 }
