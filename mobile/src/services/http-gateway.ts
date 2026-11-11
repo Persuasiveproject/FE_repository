@@ -4,8 +4,8 @@ import { DomainError, type AppGateway } from './app-gateway.ts';
 import { count, id, invalidResponse, record, timestamp } from './api-values.ts';
 import { parseMembership, parseProfile, parseResults, stance, toDebate, toOpinion } from './http-models.ts';
 import { getPublicCategories, getPublicDebates, parsePublicDebates, toDiscussion } from './public-api.ts';
-import { getPublicDetail, getPublicPosts, getPublicThread, getRecentPublicPost } from './public-debate-api.ts';
-import { fetchDraft, getServerSummary, patchDraft, type DraftDto } from './remaining-api.ts';
+import { getPublicDetail, getPublicPosts, getPublicSummary, getPublicThread, getRecentPublicPost } from './public-debate-api.ts';
+import { fetchDraft, patchDraft, type DraftDto } from './remaining-api.ts';
 import type { CreateDebateInput, Profile, SavedDraft } from '../types/core';
 
 type DraftOperation = { draftId?: string; publishKey: string; signature: string; uncertain?: boolean; editUncertain?: boolean; draft?: SavedDraft; publishStarted?: boolean; published?: boolean };
@@ -216,7 +216,7 @@ export function createHttpGateway(): AppGateway {
         throw error;
       }
     },
-    getSummary: getServerSummary, getWallet: unavailable,
+    getSummary: getPublicSummary, getWallet: unavailable,
   };
   return gateway;
 }

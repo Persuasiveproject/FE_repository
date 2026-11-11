@@ -75,7 +75,8 @@ PATCH 응답이 끊기면 게시 전에 선택한 내용을 다시 저장해 서
 
 | 파일 | 역할 |
 | --- | --- |
-| `src/services/remaining-api.ts` | 요약·시간·이력·알림·초안의 실제 요청, 응답 형식 검사, 서버 시간 계산 |
+| `src/services/public-debate-api.ts` | PR #8/#9에서 가져온 공개 AI 요약 요청·응답 검사. gateway와 기존 요약 호출 이름이 함께 사용 |
+| `src/services/remaining-api.ts` | 시간·이력·알림·초안의 실제 요청·응답 검사·서버 시간 계산. 요약은 공통 구현을 재사용 |
 | `src/services/http-gateway.ts` | 요약과 초안 저장/수정/게시 연결. 계정 전환·재시도·중복 게시 방지 |
 | `src/services/app-gateway.ts` | 화면이 사용할 초안 함수의 입력·출력 타입 |
 | `src/types/core.ts` | 저장한 초안·생성 시각이 없을 수 있는 요약 타입 |
@@ -115,7 +116,17 @@ PATCH 응답이 끊기면 게시 전에 선택한 내용을 다시 저장해 서
 
 최종 점검: TypeScript·ESLint(경고 0)·단위 테스트 **64개**·웹 HTTP/SSR **27개 경로**·공개 API/CORS 검사가 통과했습니다.
 Android/iOS/Web 전체 번들도 생성했습니다(`.expo/remaining-api-export`, Git 제외).
-검사용 웹 서버는 종료했으며 Commit·Push·PR 생성·Merge는 수행하지 않았습니다.
+이 API 구현 단계에서는 검사용 웹 서버를 종료했고 Commit·Push·PR 생성·Merge는 수행하지 않았습니다.
+
+### PR #8/#9와 로컬 작업 통합
+
+사용자 요청에 따라 PR #8/#9의 같은 원본 커밋을 작업 브랜치에 한 번 병합했습니다.
+공개 요약 함수와 원래 테스트를 유지하고, 로컬의 Basic 인증·계정 전환 보호·입장별 생성 시각·재조회 버튼을 함께 사용합니다.
+중복된 요약 요청/파서는 제거하고 `getPublicSummary`/`parsePublicSummary`로 통일했습니다.
+`remaining-api.ts`의 이전 이름은 이 공통 함수를 다시 내보내는 호환 이름입니다.
+요약은 공개 GET이므로 Basic 헤더 없이 조회합니다. 시각은 소수점 유무와 관계없이 실제 시각으로 비교하고 원문 ID는 중복 제거합니다.
+통합 후 TypeScript·ESLint·단위 테스트 **69개**가 통과했습니다. #10의 Bearer 인증 코드는 이번 통합에 포함하지 않습니다.
+통합한 함수와 HTTP gateway의 실제 서버 요약 GET도 확인했으며 Android/iOS/Web 번들 검사를 통과했습니다(`.expo/integrated-api-export`).
 
 ## 남은 범위
 

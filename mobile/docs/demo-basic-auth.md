@@ -146,4 +146,4 @@ npm.cmd run test:api
 Basic 인증 단계 검사: TypeScript·ESLint·단위 테스트 **50개**, 웹 **23개 경로 HTTP/SSR**, Android/iOS/Web 전체 번들 생성이 통과했습니다. 이후 5개 API를 추가한 최종 점검은 [추가 API 안내](remaining-api-guide.md)를 확인하세요.
 번들 결과는 Git에서 무시되는 `.expo/demo-basic-auth-export`에 저장했습니다.
 실제 gateway HTTPS 통합 검증과 별개로 브라우저 클릭·휴대폰 실기기 검사는 남아 있습니다.
-검사용 웹 서버는 종료했고, 이번 작업에서는 Commit·Push·PR 생성·Merge를 수행하지 않았습니다.
+Basic 인증 구현 단계에서는 검사용 웹 서버를 종료했고 Commit·Push·PR 생성·Merge를 수행하지 않았습니다. 이후 사용자 요청으로 진행한 PR #8/#9 통합은 [추가 API 안내](remaining-api-guide.md)에 기록했습니다.

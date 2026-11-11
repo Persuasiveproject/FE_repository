@@ -1,7 +1,10 @@
 import { apiRequest, ApiError } from './api-client.ts';
 import { count, id, invalidResponse, nextCursor, record, routeId, string, timestamp } from './api-values.ts';
 import { stance } from './http-models.ts';
-import type { CreateDebateInput, Summary } from '../types/core';
+import type { CreateDebateInput } from '../types/core';
+
+// PR #8/#9의 공개 요약 구현을 공통으로 사용합니다. 기존 호출 이름은 호환을 위해 유지합니다.
+export { parsePublicSummary as parseSummary, getPublicSummary as getServerSummary } from './public-debate-api.ts';
 
 export type StanceEvent = { id: string; fromStance: 'PRO' | 'CON' | 'NEUTRAL'; toStance: 'PRO' | 'CON' | 'NEUTRAL'; changedAt: string; persuasionId: string | null };
 export type NotificationItem = { id: string; type: string; title: string; body: string | null; targetType: string | null; targetId: string | null; isRead: boolean; createdAt: string };
@@ -11,22 +14,6 @@ export type ServerTiming = { debateId: string; status: 'OPEN' | 'CLOSED' | 'CANC
 export type ClockSample = ServerTiming & { monotonicAt: number; halfRoundTripMs: number };
 export const monotonicNow = () => typeof performance !== 'undefined' ? performance.now() : Date.now();
 
-export function parseSummary(value: unknown): Summary {
-  const data = record(record(value).data);
-  if (!Array.isArray(data.summaries)) invalidResponse();
-  const seen = new Set<string>();
-  const sections = data.summaries.map((value) => {
-    const row = record(value); const side = stance(row.stance);
-    if (side === 'NEUTRAL' || seen.has(side) || !Array.isArray(row.sourcePostIds)) invalidResponse();
-    seen.add(side);
-    return { title: side === 'PRO' ? '찬성 핵심 근거' : '반대 핵심 근거', text: string(row.summaryText),
-      opinionIds: [...new Set(row.sourcePostIds.map(id))], generatedAt: timestamp(row.createdAt) };
-  });
-  return { generatedAt: sections.length ? sections.reduce((latest, section) => Date.parse(section.generatedAt) > Date.parse(latest) ? section.generatedAt : latest, sections[0].generatedAt) : null, sections };
-}
-export async function getServerSummary(debateId: string, signal?: AbortSignal): Promise<Summary> {
-  return parseSummary(await apiRequest<unknown>(`/v1/debates/${routeId(debateId)}/summary`, { auth: 'optional', signal }));
-}
 export function parseEvents(value: unknown): StanceEvent[] {
   const data = record(record(value).data);
   if (!Array.isArray(data.events)) invalidResponse();
