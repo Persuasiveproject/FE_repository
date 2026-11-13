@@ -14,12 +14,15 @@ import { getDiscussions } from '@/services/discussions';
 import { dataSource } from '@/services/gateway';
 import ApiListScreen from '@/features/discussions/api-list-screen';
 
-export default function DiscussionListScreen() {
-  if (dataSource === 'api') return <ApiListScreen />;
-  return <MockDiscussionListScreen />;
+type ListHeader = { title?: string; back?: boolean };
+
+// 하단 탭의 '탐색'도 이 화면을 제목만 바꿔 재사용합니다.
+export default function DiscussionListScreen({ title = '토론 목록', back = true }: ListHeader) {
+  if (dataSource === 'api') return <ApiListScreen title={title} back={back} />;
+  return <MockDiscussionListScreen title={title} back={back} />;
 }
 
-function MockDiscussionListScreen() {
+function MockDiscussionListScreen({ title, back }: ListHeader) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('전체');
   const [status, setStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
@@ -27,7 +30,7 @@ function MockDiscussionListScreen() {
   const items = resource.status === 'success' ? filterDiscussions(resource.data, query, category, status) : [];
   return <SafeAreaView style={styles.screen}>
     <View style={styles.frame}>
-      <ScreenHeader title="토론 목록" back />
+      <ScreenHeader title={title ?? '토론 목록'} back={back} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <TextInput accessibilityLabel="토론 검색" placeholder="관심 있는 주제를 검색해 보세요"
           placeholderTextColor={AppColors.textSecondary} value={query} onChangeText={setQuery}
