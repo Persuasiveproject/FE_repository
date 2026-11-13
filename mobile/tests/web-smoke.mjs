@@ -38,8 +38,12 @@ for (const [path, title] of cases) {
   assert.ok(html.includes(title), `${path}: 제목 누락`);
   assert.ok(!html.includes('SSR streaming render error'), `${path}: SSR 오류`);
   if (path === '/') {
-    for (const label of ['Expo Starter', 'Home', 'Explore', 'Docs', '참여 중', '만들기', '마이']) {
-      assert.ok(html.includes(`>${label}<`), `기존/추가 툴바 항목 누락: ${label}`);
+    // 웹도 모바일과 같은 하단 탭(Home·Explore·참여 중·만들기·마이)을 사용합니다.
+    for (const label of ['Home', 'Explore', '참여 중', '만들기', '마이']) {
+      assert.ok(html.includes(`>${label}<`), `하단 탭 항목 누락: ${label}`);
+    }
+    for (const label of ['Expo Starter', 'Docs']) {
+      assert.ok(!html.includes(`>${label}<`), `템플릿 툴바 항목이 남아 있음: ${label}`);
     }
     for (const href of ['/', '/explore', '/joined', '/my']) {
       assert.ok(html.includes(`href="${href}"`), `탭 경로 누락: ${href}`);
