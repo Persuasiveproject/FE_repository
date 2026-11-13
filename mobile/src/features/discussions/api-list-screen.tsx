@@ -16,7 +16,9 @@ import type { CategoryDto, PublicDebatesQuery, PublicDebatesResponse } from '@/t
 import { CategoryFilter } from './category-filter';
 
 // 기존 데모 목록의 카드·필터 스타일을 사용하고 데이터 조회만 서버에 연결합니다.
-export default function ApiListScreen() {
+type ListHeader = { title?: string; back?: boolean };
+
+export default function ApiListScreen({ title = '토론 목록', back = true }: ListHeader) {
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -29,7 +31,7 @@ export default function ApiListScreen() {
   }, [query]);
   return <SafeAreaView style={styles.screen}>
     <View style={styles.frame}>
-      <ScreenHeader title="토론 목록" back />
+      <ScreenHeader title={title} back={back} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <TextInput accessibilityLabel="토론 검색" placeholder="관심 있는 주제를 검색해 보세요"
           placeholderTextColor={AppColors.textSecondary} value={query} onChangeText={setQuery}
