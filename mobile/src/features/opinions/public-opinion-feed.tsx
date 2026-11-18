@@ -9,11 +9,11 @@ import { ChoiceGroup } from '@/features/core/choice-group';
 import { STANCES, STANCE_LABEL } from '@/features/core/rules';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { useMutation } from '@/hooks/use-mutation';
-import { appendPostPage, getPublicPosts, getPublicThread, toOpinionCard } from '@/services/public-debate-api';
+import { appendPostPage, getPublicPosts, getPublicThread } from '@/services/public-debate-api';
+import { opinionReactionsEnabled } from '@/services/opinion-reaction-api';
 import type { PublicPostPage, PublicPostQuery } from '@/types/api';
 import type { Membership, Stance } from '@/types/core';
-import { OpinionCard } from './opinion-card';
-import { useSession } from '@/features/session/session-provider';
+import { ApiOpinionCard } from './api-opinion-card';
 
 type Props = { debateId: string; parentId?: string; compact?: boolean; membership?: Membership | null; closed?: boolean };
 
@@ -22,6 +22,9 @@ export function PublicOpinionFeed({ debateId, parentId, compact = false, members
   const [sort, setSort] = useState<'latest' | 'upvotes' | 'persuasion'>('latest');
   const useUpvotesForSmallDebate = useCallback(() => setSort('upvotes'), []);
   return <View style={compact ? styles.replies : styles.feed}>
+    {!compact && <Caption>{opinionReactionsEnabled()
+      ? '선택한 반응을 다시 누르면 취소합니다. 이전 접속의 반응은 조회되지 않으므로 내 반응 취소를 사용할 수 있어요.'
+      : '공감·비공감 기능은 서버 연결 준비 중입니다.'}</Caption>}
     {!compact && <ChoiceGroup options={[{ value: 'ALL', label: '전체' }, ...STANCES.map((value) => ({ value, label: STANCE_LABEL[value] }))]}
       value={stance} onChange={setStance} layout="row" />}
     {parentId === undefined && <>
@@ -56,7 +59,6 @@ function PostPages({ debateId, parentId, stance, sort, membership, closed, onSma
 }
 
 function LoadedPosts({ debateId, parentId, stance, sort, firstPage, membership, closed, onSmallPersuasionResult }: PageProps & { firstPage: PublicPostPage }) {
-  const { profile } = useSession();
   const [items, setItems] = useState(firstPage.items);
   const [cursor, setCursor] = useState(firstPage.nextCursor);
   const [expanded, setExpanded] = useState<string[]>([]);
@@ -72,8 +74,7 @@ function LoadedPosts({ debateId, parentId, stance, sort, firstPage, membership, 
     {parentId !== undefined && <Caption>불러온 답글 {items.length}개{stance !== 'ALL' ? ' · 입장 필터는 불러온 답글에 적용됩니다.' : ''}</Caption>}
     {visible.length === 0 && <Notice>{cursor !== null ? '불러온 목록에 해당 의견이 없습니다. 더 보기를 눌러 다음 목록을 확인해 주세요.' : '아직 해당 의견이나 답글이 없습니다.'}</Notice>}
     {visible.map((item) => <View key={item.postId} style={styles.item}>
-      <OpinionCard item={toOpinionCard(item)} canVote={false} onVote={() => {}}
-        canPersuade={!!profile && !!membership && !closed && membership.anonymousNo !== item.anonymousNo}
+      <ApiOpinionCard post={item} membership={membership} closed={closed}
         onPersuaded={() => router.navigate({ pathname: '/discussions/[id]/vote', params: { id: debateId, opinionId: item.postId } })}
         repliesExpanded={parentId === undefined && expanded.includes(item.postId)}
         onOpen={() => {

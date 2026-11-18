@@ -6,6 +6,7 @@ import type { OpinionCardData, Summary } from '../types/core';
 import type { HomeFeed } from '../types/discussion';
 import { parseMembership } from './http-models.ts';
 import { getAuthRevision, subscribeBasicAuth } from './basic-auth.ts';
+import { nextPostRevision, rememberPostRead } from './post-observation.ts';
 
 export function parsePublicHome(value: unknown): PublicHomeDto {
   const data = record(record(value).data);
@@ -66,8 +67,9 @@ export function parsePublicPosts(value: unknown, debateId: string, parentId?: st
 // #31은 replies만 반환합니다. 직접 주소를 열어 캐시가 없으면 원문을 만들어 표시하지 않습니다.
 const recentPosts = new Map<string, PublicPostDto>();
 subscribeBasicAuth(() => recentPosts.clear());
-function rememberPosts(items: PublicPostDto[]) {
+function rememberPosts(items: PublicPostDto[], readRevision: number) {
   for (const item of items) {
+    rememberPostRead(item, readRevision);
     recentPosts.delete(item.postId); recentPosts.set(item.postId, item);
     if (recentPosts.size > 200) recentPosts.delete(recentPosts.keys().next().value!);
   }
@@ -101,22 +103,24 @@ export async function getPublicDetail(debateId: string, signal?: AbortSignal): P
   } catch (error) { return readError(error); }
 }
 export async function getPublicPosts(debateId: string, query: PublicPostQuery = {}, signal?: AbortSignal): Promise<PublicPostPage> {
+  const readRevision = nextPostRevision();
   const key = routeId(debateId);
   const search = new URLSearchParams({ sort: query.sort ?? 'latest' });
   if (query.stance) search.set('stance', query.stance);
   if (query.cursor) search.set('cursor', query.cursor);
   try {
     const page = parsePublicPosts(await apiRequest<unknown>(`/v1/debates/${key}/posts?${search}`, { auth: 'public', signal }), key);
-    rememberPosts(page.items); return page;
+    rememberPosts(page.items, readRevision); return page;
   } catch (error) { return readError(error); }
 }
 export async function getPublicThread(debateId: string, parentId: string, cursor?: string, signal?: AbortSignal): Promise<PublicPostPage> {
+  const readRevision = nextPostRevision();
   const debate = routeId(debateId); const parent = routeId(parentId);
   const search = new URLSearchParams();
   if (cursor) search.set('cursor', cursor);
   try {
     const page = parsePublicPosts(await apiRequest<unknown>(`/v1/posts/${parent}/thread${search.size ? `?${search}` : ''}`, { auth: 'public', signal }), debate, parent);
-    rememberPosts(page.items); return page;
+    rememberPosts(page.items, readRevision); return page;
   } catch (error) { return readError(error); }
 }
 export function appendPostPage(items: PublicPostDto[], page: PublicPostPage, requested: string[]): PublicPostDto[] {

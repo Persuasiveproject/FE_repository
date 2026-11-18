@@ -7,6 +7,7 @@ import { getPublicCategories, getPublicDebates, parsePublicDebates, toDiscussion
 import { getPublicDetail, getPublicPosts, getPublicSummary, getPublicThread, getRecentPublicPost } from './public-debate-api.ts';
 import { fetchDraft, patchDraft, type DraftDto } from './remaining-api.ts';
 import type { CreateDebateInput, Profile, SavedDraft } from '../types/core';
+import { opinionReactions } from './opinion-reactions.ts';
 
 type DraftOperation = { draftId?: string; publishKey: string; signature: string; uncertain?: boolean; editUncertain?: boolean; draft?: SavedDraft; publishStarted?: boolean; published?: boolean };
 // 객체 속성 순서에 의존하지 않고 서버로 보내는 값으로 같은 편집인지 판단합니다.
@@ -196,7 +197,21 @@ export function createHttpGateway(): AppGateway {
       return { id: id(data.postId), debateId: input.debateId, parentId: input.parentId ?? null, authorName: '익명 나',
         content: input.content.trim(), createdAt: timestamp(data.createdAt), stance: stance(data.stanceAtWrite), upvotes: 0, downvotes: 0, replyCount: 0 };
     },
-    voteOpinion: unavailable,
+    async voteOpinion(debateId, opinionId, vote) {
+      const revision = requireRevision();
+      const debate = await gateway.getDebate(debateId); ensureRevision(revision);
+      let post = getRecentPublicPost(debateId, opinionId);
+      if (!post) { await gateway.getOpinion(debateId, opinionId); ensureRevision(revision); post = getRecentPublicPost(debateId, opinionId); }
+      if (!post) throw new DomainError('POST_NOT_LOADED', '토론방에서 의견을 불러온 뒤 다시 시도해 주세요.');
+      const target = { debateId, postId: opinionId, parentId: post.parentId };
+      const access = { signedIn: !!getBasicSession(), participant: !!debate.membership,
+        own: !!debate.membership && debate.membership.anonymousNo === post.anonymousNo, closed: debate.status === 'CLOSED' };
+      const ok = opinionReactions.get(target).retry ? await opinionReactions.retry(target, access) : await opinionReactions.press(target, vote, access);
+      ensureRevision(revision);
+      const snapshot = opinionReactions.get(target);
+      if (!ok || !snapshot.counts || snapshot.reaction === 'UNKNOWN') throw new DomainError('REACTION_NOT_CONFIRMED', snapshot.error || '반응을 처리 중입니다. 결과를 확인한 뒤 다시 시도해 주세요.');
+      return { ...toOpinion(post, getBasicSession()?.memberId, debate.membership), upvotes: snapshot.counts.upvoteCount, downvotes: snapshot.counts.downvoteCount, myVote: snapshot.reaction };
+    },
     async changeStance(input) {
       const revision = getAuthRevision();
       await apiRequest<unknown>(`/v1/debates/${id(input.debateId)}/me/stance`, { auth: 'required', method: 'PATCH',
