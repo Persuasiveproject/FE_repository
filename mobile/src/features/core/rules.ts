@@ -16,10 +16,10 @@ export function validateDebate(input: CreateDebateInput, categories: readonly st
 export function validateOpinion(content: string): string | null {
   return !content.trim() || content.trim().length > LIMITS.opinion ? '본문은 1~1,000자로 입력해 주세요.' : null;
 }
-export function validateProfile(input: SignUpInput): string | null {
+export function validateProfile(input: SignUpInput, categories: readonly string[] = CREATE_CATEGORIES): string | null {
   if (input.nickname.trim().length < 2 || input.nickname.trim().length > LIMITS.nickname) return '닉네임은 2~20자로 입력해 주세요.';
   if (!input.termsAccepted || !input.privacyAccepted) return '필수 항목을 확인해 주세요.';
-  if (input.interests.length > 5 || input.interests.some((item) => !CREATE_CATEGORIES.some((category) => category === item))) return '관심 주제는 목록에서 최대 5개까지 선택해 주세요.';
+  if (input.interests.length > 5 || input.interests.some((item) => !categories.includes(item))) return '관심 주제는 목록에서 최대 5개까지 선택해 주세요.';
   return null;
 }
 export function isClosed(debate: { status: string; endsAt: string | null }, now = Date.now()) {
