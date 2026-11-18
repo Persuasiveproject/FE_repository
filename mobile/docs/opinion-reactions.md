@@ -1,7 +1,8 @@
 # 의견·답글 공감/비공감 API 연동
 
 작성일: 2026-11-18 · 작업 브랜치: `feat/opinion-reactions`.
-기준 FE main: `93fb20b2b1e9dbc47ae52f8cefc716069c0a547b`.
+최초 구현 기준 FE main: `93fb20b2b1e9dbc47ae52f8cefc716069c0a547b`.
+PR #16 충돌 해결 시 반영한 main: `28e74c2219d33636abffca44c4a001be69de45fe` (PR #15 병합 포함).
 
 **FE 구현은 준비했지만, 실제 개발 서버의 반응 쓰기 검증은 아직 하지 않았습니다.**
 확인 당시 BE PR #49는 미병합이며, 개발 서버의 반응 경로를 인증 없이 일반 OPTIONS로 조회하면 404였습니다.
@@ -13,15 +14,17 @@
 | --- | --- |
 | FE main | `OpinionCard`는 위 화살표·현재 표수·아래 화살표와 오른쪽 영업/답글 배치를 사용. API 목록과 원문 카드는 `canVote=false`. mock의 투표 기능과 실제 API 기능을 구분 |
 | [FE PR #10](https://github.com/Persuasiveproject/FE_repository/pull/10) | OPEN, head `9956e4290116f0dcd4c9ad69ac2df0d2e75fa898`. Bearer 기반 API client·인증 함수·공유 DTO 추가. GitHub는 현재 충돌 상태(`dirty`)로 보고. 기존 main의 Basic 인증과 기능 중복이 있어 가져오지 않음 |
-| [FE PR #15](https://github.com/Persuasiveproject/FE_repository/pull/15) | OPEN, head `e837c7980c2ac4015eab8ca2cd24f396ea770897`. `public-opinion-feed.tsx`의 최신/공감/영업순과 20개 미만 fallback. 반응 쓰기 구현은 없어 기능 자체는 별개지만 같은 파일의 import·목록 렌더링을 수정하므로 병합 시 충돌 가능 |
+| [FE PR #15](https://github.com/Persuasiveproject/FE_repository/pull/15) | 최초 검토 시 OPEN, head `e837c7980c2ac4015eab8ca2cd24f396ea770897`. 이후 main에 병합되어 PR #16과 `public-opinion-feed.tsx` 충돌 발생. 최신/공감/영업순과 20개 미만 fallback을 유지하면서 반응 카드 연결과 함께 통합 |
 | [BE PR #49](https://github.com/Persuasiveproject/BE_repository/pull/49) | OPEN, 미병합. 검토한 head `72cc51c4ca0a3a898de17daaa9a11179063f908a`, base `develop`. PUT/DELETE 반응 경로와 서버 테스트가 추가됨 |
 | BE develop | 확인한 SHA `83c8c97d3a924d113cf8d34525b48dba728b2477`. #49가 합쳐졌다고 가정하지 않음 |
 
 이번 수정은 #10의 `api-client.ts`, `authenticated-api.ts`, 공유 `types/api.ts`를 건드리지 않습니다.
 인증은 main의 Basic 처리를 재사용하고 반응 DTO는 별도 파일에 둡니다.
-#15의 정렬 블록은 변경하지 않았습니다. 반응 처리를 `ApiOpinionCard`로 분리해 같은 파일에서 겹치는 코드를 줄였습니다.
-#15와 향후 통합할 때는 정렬 옵션·fallback을 가져오면서 `ApiOpinionCard` 호출과 반응 안내를 유지해야 합니다.
-두 FE PR을 실제로 병합하거나 내용을 자동 적용하지 않았습니다.
+반응 처리를 `ApiOpinionCard`로 분리해 같은 파일에서 겹치는 코드를 줄였습니다.
+PR #15가 main에 먼저 병합된 뒤, PR #16의 작업 브랜치에 최신 main을 반영해 충돌을 해결했습니다.
+정렬 옵션·fallback 콜백과 `ApiOpinionCard` 호출·반응 안내를 모두 유지했습니다.
+기존 카드가 쓰던 `useSession` 호출은 API 카드 내부에서 인증을 처리하므로 되살리지 않았습니다.
+PR #10은 포함하지 않았으며, PR #16을 main에 병합하는 작업도 수행하지 않았습니다.
 
 ## 2. 확인한 BE 계약
 
@@ -132,7 +135,7 @@ DELETE 응답 유실은 DELETE로 재시도합니다. DELETE가 성공하고 표
 | `tests/opinion-reaction.test.ts` | 실제 계약 형태의 응답으로 API·권한·상태·오류·경합 테스트 |
 
 API 계약이 바뀌면 타입과 API 파일부터, 동작 규칙이 바뀌면 컨트롤러와 테스트를 함께 수정합니다.
-디자인은 기존 `OpinionCard`와 theme을 사용합니다. 이번에 정렬 기능이나 다른 PR을 가져오지는 않았습니다.
+디자인은 기존 `OpinionCard`와 theme을 사용합니다. 정렬은 main에 병합된 PR #15의 구현을 유지합니다.
 
 ## 6. 배포 후 활성화 순서
 
