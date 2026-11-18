@@ -12,6 +12,6 @@ export function Row({ children }: PropsWithChildren) { return <View style={style
 const styles = StyleSheet.create({
   heading: { ...AppTypography.heading, color: AppColors.text }, body: { ...AppTypography.body, color: AppColors.text },
   caption: { ...AppTypography.caption, color: AppColors.textSecondary }, panel: { ...AppSurfaces.card },
-  notice: { padding: AppSpacing.lg, borderRadius: 12, backgroundColor: '#EAF7FD' },
-  error: { ...AppTypography.body, color: '#B91C1C' }, row: { flexDirection: 'row', flexWrap: 'wrap', gap: AppSpacing.sm },
+  notice: { padding: AppSpacing.lg, borderRadius: 16, backgroundColor: AppColors.soft },
+  error: { ...AppTypography.body, color: AppColors.danger }, row: { flexDirection: 'row', flexWrap: 'wrap', gap: AppSpacing.sm },
 });

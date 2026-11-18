@@ -48,3 +48,16 @@ test('요약 API 경로와 404 메시지', async () => {
   globalThis.fetch = (async () => new Response(JSON.stringify({ error: { code: 'DEBATE_NOT_FOUND', message: 'x' } }), { status: 404 })) as typeof fetch;
   await assert.rejects(getPublicSummary('7'), { code: 'DEBATE_NOT_FOUND', message: '토론을 찾을 수 없습니다.' });
 });
+
+test('줄별 근거(items)가 있으면 항목마다 근거를 붙이고 답글 근거는 원래 의견으로 연결한다', () => {
+  const summary = parsePublicSummary({ data: { summaries: [{ ...row('PRO', '2026-11-10T10:00:00Z'), summaryText: '- 첫째\n- 둘째', items: [
+    { text: '첫째', sources: [{ postId: '12', rootPostId: null }] },
+    { text: '둘째', sources: [{ postId: '30', rootPostId: '12' }, { postId: '31', rootPostId: null }] },
+  ] }] } });
+  assert.deepEqual(summary.sections[0].items, [{ text: '첫째', opinionIds: ['12'] }, { text: '둘째', opinionIds: ['12', '31'] }]);
+});
+
+test('items가 없는 옛 응답은 items 없이 그대로 읽는다', () => {
+  const summary = parsePublicSummary({ data: { summaries: [row('CON', '2026-11-10T10:00:00Z')] } });
+  assert.equal(summary.sections[0].items, undefined);
+});
