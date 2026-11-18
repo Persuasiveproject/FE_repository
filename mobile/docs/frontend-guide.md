@@ -1,5 +1,7 @@
 # 영업중 HM-100 홈 및 프런트엔드 기반 개선
 
+> 2026-11-18: 공감·비공감 API 계약과 구현 파일은 [반응 연동 안내](opinion-reactions.md)에 정리했습니다. BE #49 배포 확인 전에는 기본 OFF입니다.
+
 > 2026-11-11 현재 실제 인증·쓰기 연결은 [시연 안내](demo-basic-auth.md), 요약·시간·이력·알림·초안은 [추가 API 안내](remaining-api-guide.md)를 확인하세요.
 
 > 핵심 화면 후속 구현은 [core-screens-guide.md](core-screens-guide.md), [API 연동 안내](core-api-integration.md)를 확인하세요.

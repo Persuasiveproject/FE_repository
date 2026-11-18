@@ -17,10 +17,12 @@ type Props = {
   onVote?: (vote: 'UP' | 'DOWN') => void;
   onPersuaded?: () => void;
   repliesExpanded?: boolean;
+  votePending?: boolean;
+  countsUnavailable?: boolean;
 };
-export function OpinionCard({ item, disabled, canVote, canPersuade = canVote, onOpen, onReply, onVote, onPersuaded, repliesExpanded = false }: Props) {
+export function OpinionCard({ item, disabled, canVote, canPersuade = canVote, onOpen, onReply, onVote, onPersuaded, repliesExpanded = false, votePending = false, countsUnavailable = false }: Props) {
   const [reportOpen, setReportOpen] = useState(false);
-  const voteDisabled = !!disabled || !canVote;
+  const voteDisabled = !!disabled || !canVote || votePending;
   const persuadeDisabled = !!disabled || !canPersuade;
   // 원래의 투표 전환/취소 로직은 유지하고, 두 수의 차이를 현재 표수로 보여 줍니다.
   const score = item.upvotes - item.downvotes;
@@ -36,13 +38,13 @@ export function OpinionCard({ item, disabled, canVote, canPersuade = canVote, on
     <Caption>{new Date(item.createdAt).toLocaleString('ko-KR')}</Caption>
     <View style={styles.actions}>
       {onVote && <View style={styles.votes}>
-        <Pressable accessibilityRole="button" accessibilityLabel="업보트" accessibilityState={{ disabled: voteDisabled, selected: item.myVote === 'UP' }}
+        <Pressable accessibilityRole="button" accessibilityLabel={countsUnavailable ? '공감 · 표수 확인 중' : `공감 · ${item.upvotes}개`} accessibilityState={{ disabled: voteDisabled, selected: item.myVote === 'UP', busy: votePending }}
           disabled={voteDisabled} onPress={() => onVote('UP')}
           style={({ pressed }) => [styles.vote, item.myVote === 'UP' && styles.selected, (pressed || voteDisabled) && styles.dim]}>
           <Text style={[styles.arrow, item.myVote === 'UP' && styles.selectedLabel]}>↑</Text>
         </Pressable>
-        <Text accessibilityLabel={`현재 표수 ${score}`} accessibilityLiveRegion="polite" style={styles.score}>{score}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="다운보트" accessibilityState={{ disabled: voteDisabled, selected: item.myVote === 'DOWN' }}
+        <Text accessibilityLabel={countsUnavailable ? '표수 확인 중' : `현재 표수 ${score}, 공감 ${item.upvotes}개, 비공감 ${item.downvotes}개`} accessibilityLiveRegion="polite" style={styles.score}>{countsUnavailable ? '…' : score}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={countsUnavailable ? '비공감 · 표수 확인 중' : `비공감 · ${item.downvotes}개`} accessibilityState={{ disabled: voteDisabled, selected: item.myVote === 'DOWN', busy: votePending }}
           disabled={voteDisabled} onPress={() => onVote('DOWN')}
           style={({ pressed }) => [styles.vote, item.myVote === 'DOWN' && styles.selected, (pressed || voteDisabled) && styles.dim]}>
           <Text style={[styles.arrow, item.myVote === 'DOWN' && styles.selectedLabel]}>↓</Text>
