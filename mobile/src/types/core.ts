@@ -48,7 +48,9 @@ export type DebateResults = {
   computedAt: string;
   demographics: null;
 };
-export type Summary = { generatedAt: string | null; sections: { title: string; text: string; opinionIds: string[]; generatedAt?: string }[] };
+// items: 줄마다 근거 의견이 따로 붙은 요약(BE PR #58 이후). 없으면 text를 줄 단위로 나눠 보여 준다.
+export type SummaryItem = { text: string; opinionIds: string[] };
+export type Summary = { generatedAt: string | null; sections: { title: string; text: string; opinionIds: string[]; generatedAt?: string; items?: SummaryItem[] }[] };
 export type SavedDraft = { id: string; categoryId: string; input: CreateDebateInput; createdAt: string };
 export type Wallet = { balance: number; transactions: { id: string; label: string; amount: number; createdAt: string }[] };
 export type JoinedDebateCard = Discussion & { id: string; membership?: Membership | null };

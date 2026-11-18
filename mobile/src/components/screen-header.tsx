@@ -1,28 +1,37 @@
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppColors, AppLayout, AppSpacing, AppTypography } from '@/constants/theme';
 
-export function ScreenHeader({ title, back = false, brand = false }: { title: string; back?: boolean; brand?: boolean }) {
+type Props = { title: string; back?: boolean; brand?: boolean; right?: ReactNode };
+
+// B안 헤더: 로고는 초록 점 + '영업중', 하위 화면은 뒤로 가기 + 가운데 제목.
+export function ScreenHeader({ title, back = false, brand = false, right }: Props) {
   function goBack() {
     if (router.canGoBack()) router.back();
     else router.replace('/');
   }
   return (
     <View style={styles.header}>
-      {back && <Pressable accessibilityRole="button" accessibilityLabel="뒤로 가기" onPress={goBack} style={styles.back}>
+      {back && <Pressable accessibilityRole="button" accessibilityLabel="뒤로 가기" onPress={goBack} hitSlop={8} style={styles.side}>
         <Text style={styles.backText}>‹</Text>
       </Pressable>}
-      <Text accessibilityRole="header" style={brand ? styles.brand : styles.title}>{title}</Text>
+      {brand ? <View style={styles.brandRow}>
+        <View style={styles.brandDot} />
+        <Text accessibilityRole="header" style={styles.brand}>{title}</Text>
+      </View> : <Text accessibilityRole="header" numberOfLines={1} style={[styles.title, back && styles.centered]}>{title}</Text>}
+      {right ?? (back ? <View style={styles.side} /> : null)}
     </View>
   );
 }
 const styles = StyleSheet.create({
-  header: { backgroundColor: AppColors.surface, padding: AppSpacing.md, flexDirection: 'row',
-    alignItems: 'center', gap: AppSpacing.sm },
-  title: { ...AppTypography.heading, color: AppColors.text, flex: 1 },
-  // main의 기존 영업중 로고와 같은 기본 글꼴·크기·굵기·색상입니다.
-  brand: { ...AppTypography.logo, color: '#1F2937', flex: 1 },
-  back: { minWidth: AppLayout.touchTarget, minHeight: AppLayout.touchTarget,
-    alignItems: 'center', justifyContent: 'center' },
-  backText: { color: AppColors.text, fontSize: 28 },
+  header: { backgroundColor: AppColors.surface, paddingHorizontal: AppSpacing.lg, minHeight: 52,
+    flexDirection: 'row', alignItems: 'center', gap: AppSpacing.sm },
+  title: { ...AppTypography.display, color: AppColors.text, flex: 1, paddingHorizontal: AppSpacing.xs },
+  centered: { ...AppTypography.label, fontSize: 17, fontWeight: '700', textAlign: 'center' },
+  brandRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: AppSpacing.xs },
+  brandDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: AppColors.open, boxShadow: '0 0 8px rgba(18, 183, 106, 0.55)' },
+  brand: { ...AppTypography.logo, color: AppColors.text },
+  side: { minWidth: AppLayout.touchTarget, minHeight: AppLayout.touchTarget, alignItems: 'center', justifyContent: 'center' },
+  backText: { color: AppColors.text, fontSize: 32, lineHeight: 34 },
 });

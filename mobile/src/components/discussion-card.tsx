@@ -1,64 +1,38 @@
-import { AppColors, AppSurfaces, AppTypography } from '@/constants/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
+import { StatusSign } from '@/components/ui/stance';
 
-// 토론 데이터의 형태 정의
 import type { Discussion } from '@/types/discussion';
 export type { Discussion } from '@/types/discussion';
 
-// 컴포넌트가 외부에서 받을 정보
 type Props = {
   discussion: Discussion;
   onPress: () => void;
   recommended?: boolean;
 };
 
-// 실제 토론 카드
+// B안 목록 행: 카드를 반복하지 않고 아래 구분선으로 나눈다.
 export function DiscussionCard({ discussion, onPress, recommended = false }: Props) {
+  const closed = discussion.status === 'CLOSED';
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={discussion.title}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={onPress}>
-      <View style={styles.cardTop}>
-        <Text style={styles.tag}>{[recommended ? '추천' : null, discussion.category,
-          !recommended ? discussion.kind : null, discussion.status === 'CLOSED' ? '종료' : '진행 중'].filter(Boolean).join(' · ')}</Text>
-      </View>
-
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]} onPress={onPress}>
+      <StatusSign closed={closed} extra={[recommended ? '추천' : null, discussion.category, discussion.kind]} />
       <Text style={styles.title}>{discussion.title}</Text>
-
-      {!!discussion.description && <Text style={styles.description}>
-        {discussion.description}
-      </Text>}
-
-      <Text style={styles.participants}>
-        참여 {discussion.participants}명{discussion.opinionCount !== undefined ? `   의견 ${discussion.opinionCount}개` : ''}
-      </Text>
+      {!!discussion.description && <Text numberOfLines={2} style={styles.description}>{discussion.description}</Text>}
+      <View style={styles.meta}>
+        <Text style={styles.metaText}>손님 {discussion.participants}명</Text>
+        {discussion.opinionCount !== undefined && <Text style={styles.metaText}>의견 {discussion.opinionCount}개</Text>}
+      </View>
     </Pressable>
   );
 }
 
-// 토론 카드 전용 스타일
 const styles = StyleSheet.create({
-  card: {
-    ...AppSurfaces.card,
-  },
-  cardTop: {
-    alignSelf: 'stretch',
-  },
-  tag: {
-    color: AppColors.primary,
-    ...AppTypography.caption,
-  },
-  title: {
-    ...AppTypography.heading,
-    color: AppColors.text,
-  },
-  description: {
-    ...AppTypography.body,
-    color: AppColors.textSecondary,
-  },
-  participants: {
-    ...AppTypography.caption,
-    color: AppColors.textSecondary,
-  },
-  pressed: { opacity: 0.65 },
+  row: { paddingVertical: AppSpacing.lg, gap: AppSpacing.sm, borderBottomWidth: 1, borderBottomColor: AppColors.border },
+  title: { ...AppTypography.rowTitle, color: AppColors.text },
+  description: { ...AppTypography.body, fontSize: 14, color: AppColors.textSecondary },
+  meta: { flexDirection: 'row', gap: AppSpacing.md },
+  metaText: { ...AppTypography.caption, color: AppColors.textSecondary, fontWeight: '500' },
+  pressed: { opacity: 0.6 },
 });
-

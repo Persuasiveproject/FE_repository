@@ -1,20 +1,20 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { StatusSign } from '@/components/ui/stance';
 import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
-type Props = { remaining: string; title: string; description: string };
+type Props = { remaining: string; title: string; description: string; closed?: boolean; category?: string; kind?: string };
 
-// Figma DB-200의 토론 주제 영역. 글꼴은 앱의 시스템 기본 글꼴을 유지합니다.
-export function TopicSummaryCard({ remaining, title, description }: Props) {
-  return <View style={styles.card}>
-    <Text style={styles.remaining}>{remaining}</Text>
+// B안 토론 머리: 상태 간판(영업중/문 닫음) + 큰 제목 + 설명. 배경색 박스를 쓰지 않는다.
+export function TopicSummaryCard({ remaining, title, description, closed, category, kind }: Props) {
+  return <View style={styles.head}>
+    <StatusSign closed={closed} extra={[category, kind, remaining]} />
     <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-    <Text style={styles.description}>{description}</Text>
+    {!!description && <Text style={styles.description}>{description}</Text>}
   </View>;
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#EAF7FD', padding: AppSpacing.lg, gap: AppSpacing.sm },
-  remaining: { ...AppTypography.caption, color: AppColors.primary },
-  title: { ...AppTypography.heading, color: AppColors.text },
-  description: { ...AppTypography.caption, color: AppColors.textSecondary },
+  head: { gap: AppSpacing.sm, paddingBottom: AppSpacing.xs },
+  title: { ...AppTypography.title, fontSize: 24, lineHeight: 33, color: AppColors.text },
+  description: { ...AppTypography.body, lineHeight: 24, color: AppColors.textSecondary },
 });

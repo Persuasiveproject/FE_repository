@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ResourceContent } from '@/components/resource-content';
 import { AppButton } from '@/components/ui/app-button';
 import { Caption, ErrorNotice, Notice } from '@/components/ui/content-blocks';
-import { AppColors, AppSpacing } from '@/constants/theme';
-import { ChoiceGroup } from '@/features/core/choice-group';
+import { Icon } from '@/components/ui/icon';
+import { TextTabs } from '@/components/ui/text-tabs';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 import { STANCES, STANCE_LABEL } from '@/features/core/rules';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { useMutation } from '@/hooks/use-mutation';
@@ -25,20 +26,47 @@ export function PublicOpinionFeed({ debateId, parentId, compact = false, members
     {!compact && <Caption>{opinionReactionsEnabled()
       ? '선택한 반응을 다시 누르면 취소합니다. 이전 접속의 반응은 조회되지 않으므로 내 반응 취소를 사용할 수 있어요.'
       : '공감·비공감 기능은 서버 연결 준비 중입니다.'}</Caption>}
-    {!compact && <ChoiceGroup options={[{ value: 'ALL', label: '전체' }, ...STANCES.map((value) => ({ value, label: STANCE_LABEL[value] }))]}
-      value={stance} onChange={setStance} layout="row" />}
-    {parentId === undefined && <>
-      <AppButton label="AI 요약" onPress={() => router.navigate({ pathname: '/discussions/[id]/summary', params: { id: debateId } })} />
-      <ChoiceGroup options={[
-        { value: 'latest', label: '최신순' },
-        { value: 'upvotes', label: '공감순' },
-        { value: 'persuasion', label: '영업순' },
-      ]} value={sort} onChange={setSort} layout="row" />
-    </>}
+    {parentId === undefined && <AiSummaryEntry debateId={debateId} />}
+    {!compact && <FeedFilterBar stance={stance} onStance={setStance}
+      sorts={parentId === undefined ? SORTS : undefined} sort={sort} onSort={setSort} />}
     <PostPages key={JSON.stringify([debateId, parentId, stance, sort])} debateId={debateId} parentId={parentId}
       stance={stance} sort={sort} membership={membership} closed={closed} onSmallPersuasionResult={useUpvotesForSmallDebate} />
     {!!parentId && membership && !closed && <AppButton label="이 의견에 답글 쓰기" onPress={() => router.navigate({ pathname: '/discussions/[id]/reply/[opinionId]', params: { id: debateId, opinionId: parentId! } })} />}
     {compact && <AppButton label="답글 전체 화면 보기" onPress={() => router.navigate({ pathname: '/discussions/[id]/threads/[opinionId]', params: { id: debateId, opinionId: parentId! } })} />}
+  </View>;
+}
+
+const SORTS = [{ value: 'latest' as const, label: '최신순' }, { value: 'upvotes' as const, label: '공감순' }, { value: 'persuasion' as const, label: '영업순' }];
+
+// B안 토론 화면의 AI 요약 진입 줄과 입장·정렬 글자 탭. 데모 화면(detail-screen)도 같은 모양을 쓴다.
+export function AiSummaryEntry({ debateId }: { debateId: string }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel="AI 요약"
+    onPress={() => router.navigate({ pathname: '/discussions/[id]/summary', params: { id: debateId } })}
+    style={({ pressed }) => [styles.aiEntry, pressed && styles.pressed]}>
+    <Icon name="spark" size={20} strokeWidth={1.6} />
+    <Text style={styles.aiText}>AI가 양쪽 핵심 근거를 정리했어요</Text>
+    <Icon name="right" size={18} color={AppColors.textFaint} />
+  </Pressable>;
+}
+
+type FilterProps<S extends string> = {
+  stance: Stance | 'ALL'; onStance: (value: Stance | 'ALL') => void;
+  sorts?: { value: S; label: string }[]; sort?: S; onSort?: (value: S) => void;
+};
+export function FeedFilterBar<S extends string>({ stance, onStance, sorts, sort, onSort }: FilterProps<S>) {
+  return <View style={styles.feedHead}>
+    <TextTabs options={[{ value: 'ALL' as const, label: '전체' }, ...STANCES.map((value) => ({ value, label: STANCE_LABEL[value] }))]}
+      value={stance} onChange={onStance} />
+    {!!sorts && sort !== undefined && onSort && <View style={styles.sortRow}>
+      {sorts.map((option) => {
+        const active = option.value === sort;
+        return <Pressable key={option.value} accessibilityRole="button" accessibilityLabel={`정렬 · ${option.label}`}
+          accessibilityState={{ selected: active }} onPress={() => onSort(option.value)} hitSlop={6}
+          style={({ pressed }) => pressed && styles.pressed}>
+          <Text style={[styles.sortText, active && styles.sortActive]}>{option.label}</Text>
+        </Pressable>;
+      })}
+    </View>}
   </View>;
 }
 
@@ -97,6 +125,14 @@ function LoadedPosts({ debateId, parentId, stance, sort, firstPage, membership, 
 }
 const styles = StyleSheet.create({
   feed: { gap: AppSpacing.lg },
-  item: { gap: AppSpacing.sm },
-  replies: { gap: AppSpacing.sm, paddingLeft: AppSpacing.sm, borderLeftWidth: 2, borderLeftColor: AppColors.border },
+  aiEntry: { flexDirection: 'row', alignItems: 'center', gap: AppSpacing.sm + 2, paddingHorizontal: 14, paddingVertical: 12,
+    borderRadius: 14, backgroundColor: AppColors.soft },
+  aiText: { ...AppTypography.label, fontSize: 14, fontWeight: '500', color: AppColors.text, flex: 1 },
+  feedHead: { gap: AppSpacing.sm, paddingTop: AppSpacing.sm },
+  sortRow: { flexDirection: 'row', gap: AppSpacing.md },
+  sortText: { ...AppTypography.caption, fontWeight: '500', color: AppColors.textFaint },
+  sortActive: { color: AppColors.text, fontWeight: '700' },
+  pressed: { opacity: 0.6 },
+  item: { gap: AppSpacing.md },
+  replies: { gap: AppSpacing.md, paddingLeft: 40 },
 });

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 // 먼저 npm run web -- --port 8082로 서버를 실행합니다.
 const base = process.env.WEB_TEST_URL || 'http://localhost:8082';
 const cases = [
-  ['/', '지금, 생각이 모이는 곳'],
+  ['/', '손님 많은'],
   ['/discussions', '토론 목록'],
   ['/discussions/1', '토론'],
   ['/discussions/2', '토론'],

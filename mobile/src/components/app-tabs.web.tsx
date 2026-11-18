@@ -1,21 +1,16 @@
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { router } from 'expo-router';
-import { Image, Pressable, Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet } from 'react-native';
+
+import { Icon, type IconName } from '@/components/ui/icon';
 
 import { AppColors, AppLayout, AppSpacing, AppTypography } from '@/constants/theme';
 
 
 // 웹도 모바일 앱(app-tabs.tsx)과 같은 하단 탭 구성을 사용합니다.
 // 색은 OS 다크 모드와 상관없이 앱 화면과 같은 AppColors를 씁니다.
-type TabIcon = { image: number } | { symbol: SymbolViewProps['name'] };
-const icons: Record<string, TabIcon> = {
-  home: { image: require('@/assets/images/tabIcons/home.png') },
-  explore: { image: require('@/assets/images/tabIcons/explore.png') },
-  joined: { symbol: { ios: 'bubble.left.and.bubble.right', android: 'forum', web: 'forum' } },
-  create: { symbol: { ios: 'plus.app', android: 'add_box', web: 'add_box' } },
-  my: { symbol: { ios: 'person', android: 'person', web: 'person' } },
-};
+// Figma B안의 선 아이콘. 선택된 탭만 진한 색과 굵은 선으로 표시합니다.
+const icons: Record<string, IconName> = { home: 'home', explore: 'search', joined: 'chat', create: 'plus', my: 'user' };
 
 export default function AppTabs() {
   return (
@@ -51,16 +46,13 @@ export function TabButton({
   ref: _ref,
   ...props
 }: TabTriggerSlotProps & { icon: keyof typeof icons }) {
-  const tint = isFocused ? AppColors.text : AppColors.textSecondary;
-  const source = icons[icon];
+  const tint = isFocused ? AppColors.text : AppColors.textFaint;
 
   return (
     <Pressable {...props} accessibilityRole="tab" accessibilityState={{ selected: !!isFocused }}
       style={({ pressed }) => [styles.tabButton, pressed && styles.pressed]}>
       <View style={styles.iconWrap}>
-        {'image' in source
-          ? <Image source={source.image} style={[styles.icon, { tintColor: tint }]} />
-          : <SymbolView name={source.symbol} size={22} tintColor={tint} />}
+        <Icon name={icons[icon]} color={tint} strokeWidth={isFocused ? 2.2 : 1.8} />
       </View>
       <Text style={[styles.label, { color: tint }, isFocused && styles.labelActive]}>{children}</Text>
     </Pressable>
@@ -90,7 +82,6 @@ const styles = StyleSheet.create({
   inner: { flexDirection: 'row', width: '100%', maxWidth: AppLayout.maxWidth },
   tabButton: { flex: 1, alignItems: 'center', gap: 2, minHeight: AppLayout.touchTarget, justifyContent: 'center' },
   iconWrap: { height: 24, justifyContent: 'center' },
-  icon: { width: 22, height: 22 },
   label: { ...AppTypography.tab },
   labelActive: { fontWeight: '700' },
   pressed: { opacity: 0.6 },

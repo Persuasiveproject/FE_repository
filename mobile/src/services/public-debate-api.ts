@@ -141,12 +141,29 @@ export function parsePublicSummary(value: unknown): Summary {
       stance: item.stance as 'PRO' | 'CON', createdAt: timestamp(item.createdAt),
       title: summaryTitles[item.stance as 'PRO' | 'CON'], text: string(item.summaryText),
       opinionIds: [...new Set(item.sourcePostIds.map(id))],
+      items: summaryItems(item.items),
     };
   });
   if (new Set(sections.map((s) => s.stance)).size !== sections.length) invalidResponse();
   // 소수점 유무가 다른 ISO 문자열도 실제 시각으로 비교합니다.
   const generatedAt = sections.reduce<string | null>((latest, section) => latest === null || Date.parse(section.createdAt) > Date.parse(latest) ? section.createdAt : latest, null);
-  return { generatedAt, sections: sections.map(({ title, text, opinionIds, createdAt }) => ({ title, text, opinionIds, generatedAt: createdAt })) };
+  return { generatedAt, sections: sections.map(({ title, text, opinionIds, createdAt, items }) => ({ title, text, opinionIds, generatedAt: createdAt, ...(items ? { items } : {}) })) };
+}
+// 줄별 근거(items[].sources). 답글이 근거면 그 답글이 달린 원래 의견(rootPostId)의 대화로 연결한다.
+// 옛 서버처럼 items가 없거나 모양이 다르면 undefined를 돌려 화면이 text 기준으로 보이게 한다.
+function summaryItems(value: unknown): { text: string; opinionIds: string[] }[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items: { text: string; opinionIds: string[] }[] = [];
+  for (const entry of value) {
+    const item = record(entry);
+    if (typeof item.text !== 'string' || !Array.isArray(item.sources)) return undefined;
+    const ids = item.sources.map((source) => {
+      const src = record(source);
+      return src.rootPostId != null ? id(src.rootPostId) : id(src.postId);
+    });
+    items.push({ text: item.text, opinionIds: [...new Set(ids)] });
+  }
+  return items;
 }
 export async function getPublicSummary(debateId: string, signal?: AbortSignal): Promise<Summary> {
   const key = routeId(debateId);

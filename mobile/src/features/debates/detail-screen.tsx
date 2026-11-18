@@ -5,9 +5,9 @@ import { Page } from '@/components/page';
 import { ResourceContent } from '@/components/resource-content';
 import { AppButton } from '@/components/ui/app-button';
 import { Body, Caption, ErrorNotice, Notice, Panel, Row } from '@/components/ui/content-blocks';
-import { ChoiceGroup } from '@/features/core/choice-group';
-import { isClosed, remainingTime, STANCES, STANCE_LABEL } from '@/features/core/rules';
+import { isClosed, remainingTime, STANCE_LABEL } from '@/features/core/rules';
 import { OpinionCard } from '@/features/opinions/opinion-card';
+import { AiSummaryEntry, FeedFilterBar } from '@/features/opinions/public-opinion-feed';
 import { OpinionReplies } from '@/features/opinions/opinion-replies';
 import { TopicSummaryCard } from './topic-summary-card';
 import { useSession } from '@/features/session/session-provider';
@@ -39,22 +39,22 @@ function DemoDetailScreen() {
       const canParticipate = !!profile && !!debate.membership && !closed;
       const visible = opinions.filter((item) => filter === 'ALL' || item.stance === filter).sort((a, b) => sort === 'popular' ? b.upvotes - a.upvotes : b.createdAt.localeCompare(a.createdAt));
       return <>
-        <TopicSummaryCard remaining={remainingTime(debate.endsAt, now)} title={debate.title} description={debate.description} />
-        <Caption>{debate.category} · 참여 {debate.participants}명 · 마감 {debate.endsAt ? new Date(debate.endsAt).toLocaleString('ko-KR') : '미정'}</Caption>
-        {debate.membership && <Panel><Body>최초 입장 · {STANCE_LABEL[debate.membership.initialStance]}</Body>
-          <Body>내 입장 · {STANCE_LABEL[debate.membership.currentStance]}</Body></Panel>}
+        <TopicSummaryCard remaining={remainingTime(debate.endsAt, now)} title={debate.title} description={debate.description} closed={closed} />
+        <Caption>{debate.category}   손님 {debate.participants}명{debate.endsAt ? `   ${new Date(debate.endsAt).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}에 문 닫아요` : ''}</Caption>
+        {debate.membership && <Panel><Body>처음 선 자리  {STANCE_LABEL[debate.membership.initialStance]}</Body>
+          <Body>지금 선 자리  {STANCE_LABEL[debate.membership.currentStance]}</Body></Panel>}
         {!profile && <AppButton label="로그인하고 참여하기" onPress={() => router.navigate('/auth/login')} />}
         {profile && !debate.membership && !closed && <AppButton label="입장 선택하고 참여하기" variant="primary" onPress={() => router.navigate({ pathname: '/discussions/[id]/join', params: { id } })} />}
-        {canParticipate && <Row><AppButton label="의견 작성" variant="primary" onPress={() => router.navigate({ pathname: '/discussions/[id]/opinion', params: { id } })} />
+        {canParticipate && <Row><AppButton label="한마디 남기기" variant="primary" onPress={() => router.navigate({ pathname: '/discussions/[id]/opinion', params: { id } })} />
           <AppButton label="투표 · 입장 변경" onPress={() => router.navigate({ pathname: '/discussions/[id]/vote', params: { id } })} /></Row>}
         {closed && <><Notice>종료된 토론입니다. 의견과 입장은 더 이상 변경할 수 없습니다.</Notice>
           <AppButton label="최종 통계 보기" variant="primary" onPress={() => router.navigate({ pathname: '/discussions/[id]/results', params: { id } })} /></>}
-        <ChoiceGroup options={[{ value: 'ALL', label: '전체' }, ...STANCES.map((value) => ({ value, label: STANCE_LABEL[value] }))]} value={filter} onChange={setFilter} layout="row" />
-        <Row><AppButton label="AI 요약" onPress={() => router.navigate({ pathname: '/discussions/[id]/summary', params: { id } })} />
-          <AppButton label={sort === 'latest' ? '정렬 · 최신순' : '정렬 · 추천순'} onPress={() => setSort(sort === 'latest' ? 'popular' : 'latest')} /></Row>
+        <AiSummaryEntry debateId={id} />
+        <FeedFilterBar stance={filter} onStance={setFilter} sort={sort} onSort={setSort}
+          sorts={[{ value: 'latest' as const, label: '최신순' }, { value: 'popular' as const, label: '공감순' }]} />
         <ErrorNotice message={mutation.error} />
         {visible.length === 0 && <Notice>아직 이 입장의 의견이 없습니다.</Notice>}
-        {visible.map((item) => <View key={item.id} style={{ gap: 8 }}>
+        {visible.map((item) => <View key={item.id} style={{ gap: 12 }}>
           <OpinionCard item={item} disabled={mutation.pending || closed} canVote={canParticipate && item.authorId !== profile?.id}
             repliesExpanded={expandedOpinions.includes(item.id)}
             onOpen={() => setExpandedOpinions((current) => current.includes(item.id) ? current.filter((value) => value !== item.id) : [...current, item.id])}

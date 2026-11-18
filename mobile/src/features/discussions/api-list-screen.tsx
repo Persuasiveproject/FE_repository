@@ -5,10 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DiscussionCard } from '@/components/discussion-card';
 import { ResourceContent } from '@/components/resource-content';
 import { ResourceState } from '@/components/resource-state';
+import { TextTabs } from '@/components/ui/text-tabs';
 import { ScreenHeader } from '@/components/screen-header';
 import { AppButton } from '@/components/ui/app-button';
-import { Caption, ErrorNotice } from '@/components/ui/content-blocks';
-import { AppColors, AppLayout, AppSpacing, AppSurfaces, AppTypography } from '@/constants/theme';
+import { ErrorNotice } from '@/components/ui/content-blocks';
+import { AppColors, AppLayout, AppSpacing, AppTypography } from '@/constants/theme';
 import { useFocusResource } from '@/hooks/use-focus-resource';
 import { useMutation } from '@/hooks/use-mutation';
 import { appendDebatePage, getPublicCategories, getPublicDebates, toDiscussion } from '@/services/public-api';
@@ -33,17 +34,17 @@ export default function ApiListScreen({ title = '토론 목록', back = true }: 
     <View style={styles.frame}>
       <ScreenHeader title={title} back={back} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <TextInput accessibilityLabel="토론 검색" placeholder="관심 있는 주제를 검색해 보세요"
-          placeholderTextColor={AppColors.textSecondary} value={query} onChangeText={setQuery}
+        <TextInput accessibilityLabel="토론 검색" placeholder="어떤 이야기가 궁금하세요?"
+          placeholderTextColor={AppColors.textFaint} value={query} onChangeText={setQuery}
           maxLength={100} returnKeyType="search" style={styles.input} />
         <ResourceContent resource={resource} reload={reload}>{(categories) => <>
           <CategoryFilter value={categoryId} onChange={setCategoryId}
             options={[{ value: '', label: '전체' }, ...categories.map((item) => ({ value: item.id, label: item.name }))]} />
           <View style={styles.row}>
-            <View style={styles.option}><AppButton label="진행 중" selected={status === 'OPEN'} onPress={() => setStatus('OPEN')} /></View>
-            <View style={styles.option}><AppButton label="종료" selected={status === 'CLOSED'} onPress={() => setStatus('CLOSED')} /></View>
+            <TextTabs value={status} onChange={setStatus} options={[{ value: 'OPEN', label: '문 연 토론' }, { value: 'CLOSED', label: '문 닫은 토론' }]} />
+            
           </View>
-          <Caption>개발 서버 데이터 · 제목 검색 · 최신순</Caption>
+          
           <ApiResults key={JSON.stringify([search, categoryId, status])} categories={categories} search={search} categoryId={categoryId} status={status} />
         </>}</ResourceContent>
       </ScrollView>
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: AppColors.surface },
   frame: { flex: 1, backgroundColor: AppColors.background, width: '100%', maxWidth: AppLayout.maxWidth, alignSelf: 'center', gap: AppSpacing.xs },
   content: { padding: AppSpacing.xl, gap: AppSpacing.lg },
-  input: { ...AppSurfaces.button, ...AppTypography.body, color: AppColors.text },
+  input: { ...AppTypography.body, color: AppColors.text, minHeight: 50, borderRadius: 25, paddingHorizontal: AppSpacing.xl, backgroundColor: AppColors.soft },
   row: { flexDirection: 'row', gap: AppSpacing.sm },
   option: { flex: 1 },
 });

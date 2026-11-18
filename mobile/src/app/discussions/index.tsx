@@ -4,9 +4,9 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DiscussionCard } from '@/components/discussion-card';
 import { ResourceState } from '@/components/resource-state';
+import { TextTabs } from '@/components/ui/text-tabs';
 import { ScreenHeader } from '@/components/screen-header';
-import { AppButton } from '@/components/ui/app-button';
-import { AppColors, AppLayout, AppSpacing, AppSurfaces, AppTypography } from '@/constants/theme';
+import { AppColors, AppLayout, AppSpacing, AppTypography } from '@/constants/theme';
 import { CategoryFilter } from '@/features/discussions/category-filter';
 import { filterDiscussions } from '@/features/discussions/filter-discussions';
 import { useFocusResource } from '@/hooks/use-focus-resource';
@@ -32,13 +32,13 @@ function MockDiscussionListScreen({ title, back }: ListHeader) {
     <View style={styles.frame}>
       <ScreenHeader title={title ?? '토론 목록'} back={back} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <TextInput accessibilityLabel="토론 검색" placeholder="관심 있는 주제를 검색해 보세요"
-          placeholderTextColor={AppColors.textSecondary} value={query} onChangeText={setQuery}
+        <TextInput accessibilityLabel="토론 검색" placeholder="어떤 이야기가 궁금하세요?"
+          placeholderTextColor={AppColors.textFaint} value={query} onChangeText={setQuery}
           returnKeyType="search" style={styles.input} />
         <CategoryFilter value={category} onChange={setCategory} />
         <View style={styles.row}>
-          <View style={styles.option}><AppButton label="진행 중" selected={status === 'OPEN'} onPress={() => setStatus('OPEN')} /></View>
-          <View style={styles.option}><AppButton label="종료" selected={status === 'CLOSED'} onPress={() => setStatus('CLOSED')} /></View>
+          <TextTabs value={status} onChange={setStatus} options={[{ value: 'OPEN', label: '문 연 토론' }, { value: 'CLOSED', label: '문 닫은 토론' }]} />
+          
         </View>
         {resource.status === 'loading' && <ResourceState kind="loading" />}
         {resource.status === 'error' && <ResourceState kind="error" onRetry={retry} />}
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: AppColors.surface },
   frame: { flex: 1, backgroundColor: AppColors.background, width: '100%', maxWidth: AppLayout.maxWidth, alignSelf: 'center', gap: AppSpacing.xs },
   content: { padding: AppSpacing.xl, gap: AppSpacing.lg },
-  input: { ...AppSurfaces.button, ...AppTypography.body, color: AppColors.text },
+  input: { ...AppTypography.body, color: AppColors.text, minHeight: 50, borderRadius: 25, paddingHorizontal: AppSpacing.xl, backgroundColor: AppColors.soft },
   row: { flexDirection: 'row', gap: AppSpacing.sm },
   option: { flex: 1 },
 });
