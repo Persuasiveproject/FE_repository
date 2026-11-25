@@ -26,7 +26,7 @@ function ProfileForm() {
       setSaved(false); setInterests((current) => current.includes(category) ? current.filter((item) => item !== category) : current.length < 5 ? [...current, category] : current);
     }} />)}</Row>
     <ErrorNotice message={mutation.error} />
-    {saved && <Notice>데모 프로필을 저장했습니다.</Notice>}
+    {saved && <Notice>저장했어요.</Notice>}
     <AppButton label="변경 내용 저장" variant="primary" disabled={!!invalid} loading={mutation.pending}
       onPress={() => void mutation.run(async () => { await gateway.updateProfile({ nickname, interests }); await refresh(); }, () => setSaved(true))} />
   </>;
