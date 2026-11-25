@@ -15,6 +15,7 @@ import { useFocusResource } from '@/hooks/use-focus-resource';
 import { ResourceContent } from '@/components/resource-content';
 import { withAuthRevision } from '@/services/basic-auth';
 import type { CreateDebateInput, SavedDraft } from '@/types/core';
+import { PublishCost } from './publish-cost';
 
 export default function CreateScreen() {
   const { revision } = useSession();
@@ -36,7 +37,7 @@ function CreateForm({ categories = [...CREATE_CATEGORIES], initialDraft }: { cat
   const [draftId, setDraftId] = useState(initialDraft?.id);
   const [savedSignature, setSavedSignature] = useState(initialDraft ? JSON.stringify(initialDraft.input) : '');
   const [requestId] = useState(() => `create-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-  const { profile, refresh } = useSession();
+  const { refresh } = useSession();
   const mutation = useMutation();
   function patch<K extends keyof CreateDebateInput>(key: K, value: CreateDebateInput[K]) { if (!mutation.pending) setInput((current) => ({ ...current, [key]: value })); }
   const firstValid = !!input.category && (input.kind === 'ENDLESS' || (input.durationMinutes >= 5 && input.durationMinutes <= 15));
@@ -66,12 +67,10 @@ function CreateForm({ categories = [...CREATE_CATEGORIES], initialDraft }: { cat
       <Panel><Caption>{input.category} · {input.kind === 'QUICK' ? `간단토론 · ${input.durationMinutes}분` : '끝장토론 · 3일'}</Caption>
         <Heading>{input.title}</Heading><Body>{input.content}</Body></Panel>
       <Notice>{dataSource === 'api' ? '실제 서버에 게시하며 시연 계정의 코인 1개가 차감됩니다.' : '데모 코인 1개를 사용합니다. 실제 결제나 서버 게시가 아닙니다.'}</Notice>
-      <Panel><Body>현재 잔액: {profile?.coins == null ? '서버에서 게시 시 확인' : `${profile.coins} 코인`}</Body><Body>필요한 코인: {LIMITS.cost} 코인</Body>
-        {profile?.coins != null && <Body>게시 후 예상 잔액: {Math.max(0, profile.coins - LIMITS.cost)} 코인</Body>}</Panel>
       {dataSource === 'mock' && <Caption>데모 제한: 하루 3개, 동시에 진행 중인 내 토론 3개까지.</Caption>}
-      <AppButton label={dataSource === 'api' ? '1코인으로 서버에 게시하기' : '1코인으로 데모 게시하기'} variant="primary" disabled={!!error || (dataSource === 'mock' && (profile?.coins ?? 0) < LIMITS.cost)} loading={mutation.pending}
+      <PublishCost>{(canPublish) => <AppButton label={dataSource === 'api' ? '1코인으로 서버에 게시하기' : '1코인으로 데모 게시하기'} variant="primary" disabled={!!error || !canPublish} loading={mutation.pending}
         onPress={() => void mutation.run(async () => { const debate = dataSource === 'api' && draftId ? await gateway.publishDraft!(draftId, input) : await gateway.createDebate(input, requestId); await refresh(); return debate; },
-          (debate) => router.replace({ pathname: '/discussions/[id]', params: { id: debate.id } }))} />
+          (debate) => router.replace({ pathname: '/discussions/[id]', params: { id: debate.id } }))} />}</PublishCost>
     </>}
     {dataSource === 'api' && <>
       {draftId && <Caption>서버 초안 ID: {draftId} · {savedSignature === JSON.stringify(input) ? '현재 내용 저장됨' : '저장하지 않은 변경 있음'}</Caption>}
