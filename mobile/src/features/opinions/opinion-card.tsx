@@ -71,7 +71,7 @@ export function OpinionCard({ item, disabled, canVote, canPersuade = canVote, on
           style={({ pressed }) => [styles.action, (pressed || (!onOpen && disabled)) && styles.dim]}>
           <Text style={styles.actionLabel}>{onOpen ? (repliesExpanded ? '답글 접기' : `답글 펼치기${item.replyCount ? ` ${item.replyCount}` : ''}`) : '답글 쓰기'}</Text>
         </Pressable>}
-        <Pressable accessibilityRole="button" accessibilityLabel={`${item.authorName}의 의견 신고 안내`} hitSlop={6}
+        <Pressable accessibilityRole="button" accessibilityLabel={`${item.authorName}의 의견 신고`} hitSlop={6}
           onPress={() => setReportOpen(true)} style={({ pressed }) => [styles.report, pressed && styles.dim]}>
           <Text style={styles.reportLabel}>신고</Text>
         </Pressable>
@@ -80,8 +80,8 @@ export function OpinionCard({ item, disabled, canVote, canPersuade = canVote, on
     <Modal visible={reportOpen} transparent animationType="fade" onRequestClose={() => setReportOpen(false)}>
       <View style={styles.backdrop}>
         <View accessibilityViewIsModal style={styles.reportDialog}>
-          <Text accessibilityRole="header" style={styles.dialogTitle}>의견 신고 안내</Text>
-          <Text style={styles.body}>신고 기능은 서버 연결 준비 중입니다. 현재 이 버튼으로 실제 신고가 접수되지는 않습니다.</Text>
+          <Text accessibilityRole="header" style={styles.dialogTitle}>의견 신고</Text>
+          <Text style={styles.body}>아직 신고를 접수할 수 없어요.</Text>
           <AppButton label="닫기" onPress={() => setReportOpen(false)} />
         </View>
       </View>

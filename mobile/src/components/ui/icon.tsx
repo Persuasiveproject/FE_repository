@@ -2,7 +2,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { AppColors } from '@/constants/theme';
 
 // Figma B안과 같은 선 아이콘(24 그리드, 둥근 끝). 도형을 회전해 만들지 않고 경로를 그대로 쓴다.
-export type IconName = 'home' | 'search' | 'chat' | 'plus' | 'user' | 'bell' | 'back' | 'right' | 'down' | 'up' | 'spark' | 'reply' | 'close' | 'send';
+export type IconName = 'home' | 'search' | 'chat' | 'plus' | 'user' | 'bell' | 'back' | 'right' | 'down' | 'up' | 'spark' | 'reply' | 'close' | 'send' | 'check';
 
 export function Icon({ name, size = 24, color = AppColors.text, strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const p = { stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
@@ -21,5 +21,6 @@ export function Icon({ name, size = 24, color = AppColors.text, strokeWidth = 1.
     {name === 'reply' && <><Path {...p} d="M9 14 4 9l5-5" /><Path {...p} d="M4 9h10a6 6 0 0 1 6 6v4" /></>}
     {name === 'close' && <Path {...p} d="M6 6l12 12M18 6 6 18" />}
     {name === 'send' && <Path {...p} d="M4 12 20 4l-5 16-3-7z" />}
+    {name === 'check' && <Path {...p} d="M5 12.5 10 17.5 19 7" />}
   </Svg>;
 }

@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { AppColors, AppSpacing, AppTypography, StanceColors } from '@/constants/theme';
 import type { Stance } from '@/types/core';
+import { CategoryChip } from './category-chip';
 
 /**
  * Figma B안 공통 요소.
@@ -52,12 +53,21 @@ export function AvatarStack({ numbers, size = 22, ring = AppColors.surface }: { 
   </View>;
 }
 
-export function StatusSign({ closed, extra }: { closed?: boolean; extra?: (string | null | undefined)[] }) {
+// extra 항목에 onPress를 주면 누를 수 있는 작은 칩으로 보인다(예: 카드의 카테고리로 걸러 보기).
+export type SignExtra = string | { text: string; onPress: () => void; accessibilityLabel?: string } | null | undefined;
+
+// 카테고리 색 칩 다음에 회색 부가 정보(손님 수, 남은 시간 등). 문 닫은 토론만 맨 앞에 '문 닫음'.
+export function StatusSign({ closed, extra, category, onCategoryPress }: { closed?: boolean; extra?: SignExtra[]; category?: string | null; onCategoryPress?: () => void }) {
+  const items = (extra ?? []).filter((item): item is Exclude<SignExtra, null | undefined> => !!item);
   return <View style={styles.sign}>
-    <View style={[styles.dot, closed ? styles.dotClosed : styles.dotOpen]} />
-    <Text style={[styles.signText, { color: closed ? AppColors.textFaint : AppColors.open }]}>{closed ? '문 닫음' : '영업중'}</Text>
-    {(extra ?? []).filter(Boolean).map((text, index) =>
-      <Text key={`${text}-${index}`} style={[styles.signExtra, index > 0 && styles.signFaint]}>{text}</Text>)}
+    {closed && <Text style={[styles.signText, { color: AppColors.textSecondary }]}>문 닫음</Text>}
+    {!!category && <CategoryChip name={category} onPress={onCategoryPress} accessibilityLabel={onCategoryPress ? `${category} 토론만 보기` : undefined} />}
+    {items.map((item, index) => typeof item === 'string'
+      ? <Text key={`${item}-${index}`} style={[styles.signExtra, (index > 0 || !!category || closed) && styles.signFaint]}>{item}</Text>
+      : <Pressable key={`${item.text}-${index}`} accessibilityRole="button" accessibilityLabel={item.accessibilityLabel ?? item.text}
+          hitSlop={8} onPress={item.onPress} style={({ pressed }) => [styles.signChip, pressed && styles.signChipPressed]}>
+          <Text style={styles.signExtra}>{item.text}</Text>
+        </Pressable>)}
   </View>;
 }
 
@@ -85,6 +95,8 @@ const styles = StyleSheet.create({
   signText: { ...AppTypography.caption, fontWeight: '700' },
   signExtra: { ...AppTypography.caption, color: AppColors.textSecondary, fontWeight: '500' },
   signFaint: { color: AppColors.textFaint, fontWeight: '400' },
+  signChip: { backgroundColor: AppColors.soft, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },
+  signChipPressed: { backgroundColor: AppColors.border },
   bar: { flexDirection: 'row', gap: 3, alignItems: 'center', marginTop: AppSpacing.xs },
   stanceLabel: { ...AppTypography.caption, fontWeight: '700' },
 });

@@ -25,6 +25,15 @@ export function validateProfile(input: SignUpInput, categories: readonly string[
 export function isClosed(debate: { status: string; endsAt: string | null }, now = Date.now()) {
   return debate.status === 'CLOSED' || (debate.endsAt !== null && Date.parse(debate.endsAt) <= now);
 }
+// 카드용 짧은 남은 시간: '2일 남음', '3시간 남음', '12분 남음'
+export function timeLeft(endsAt: string | null | undefined, now = Date.now()) {
+  if (!endsAt) return null;
+  const minutes = Math.ceil((Date.parse(endsAt) - now) / 60000);
+  if (!Number.isFinite(minutes) || minutes <= 0) return null;
+  if (minutes < 60) return `${minutes}분 남음`;
+  const hours = Math.floor(minutes / 60);
+  return hours < 24 ? `${hours}시간 남음` : `${Math.floor(hours / 24)}일 남음`;
+}
 export function remainingTime(endsAt: string | null, now = Date.now()) {
   if (endsAt === null) return '마감 시간 미정';
   const minutes = Math.ceil((Date.parse(endsAt) - now) / 60000);

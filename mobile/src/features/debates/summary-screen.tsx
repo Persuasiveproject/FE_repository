@@ -8,7 +8,7 @@ import { Caption, Notice } from '@/components/ui/content-blocks';
 import { Icon } from '@/components/ui/icon';
 import { AppColors, AppRadius, AppSpacing, AppTypography, StanceColors } from '@/constants/theme';
 import { useFocusResource } from '@/hooks/use-focus-resource';
-import { dataSource, gateway } from '@/services/gateway';
+import { gateway } from '@/services/gateway';
 import { useSession } from '@/features/session/session-provider';
 import { withAuthRevision } from '@/services/basic-auth';
 import type { Stance } from '@/types/core';
@@ -46,14 +46,13 @@ export default function SummaryScreen() {
   const loader = useCallback(() => withAuthRevision(revision, () => gateway.getSummary(id)), [id, revision]);
   const { resource, reload } = useFocusResource(loader);
   return <Page title="AI 요약">
-    {dataSource === 'mock' && <Notice>현재는 AI 서버를 호출하지 않는 데모 요약입니다. 화면 구조와 원문 이동을 확인할 수 있습니다.</Notice>}
     <ResourceContent resource={resource} reload={reload}>{(summary) => <>
       <View style={styles.lead}>
         <Icon name="spark" size={18} strokeWidth={1.7} />
         <Text style={styles.leadText}>AI가 정리한 양쪽 이야기</Text>
       </View>
       {summary.generatedAt && <Caption>{new Date(summary.generatedAt).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}에 공감 많이 받은 의견을 읽고 정리했어요.</Caption>}
-      {summary.sections.length === 0 && <Notice>의견이 더 모이면 양쪽 이야기를 정리해 드려요.</Notice>}
+      {summary.sections.length === 0 && <Notice>아직 요약이 없어요.</Notice>}
       {summary.sections.map((section) => {
         const side = sideOf(section.title);
         const tone = StanceColors[side];
@@ -72,7 +71,6 @@ export default function SummaryScreen() {
           {!section.items && section.opinionIds.length > 0 && <Sources debateId={id} ids={section.opinionIds} />}
         </View>;
       })}
-      <Text style={styles.note}>토론에 올라온 글만 읽고 정리해요. 어느 쪽이 옳은지는 판단하지 않아요.</Text>
       <AppButton label="요약 다시 불러오기" onPress={reload} />
     </>}</ResourceContent>
   </Page>;

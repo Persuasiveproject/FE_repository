@@ -46,7 +46,6 @@ function StanceForm({ debate, opinions, mode, selectedOpinionId, reload }: { deb
     {mode === 'change' && <>
       <Caption>최초 입장 · {debate.membership ? STANCE_LABEL[debate.membership.initialStance] : ''}</Caption>
       <Heading>어떤 의견이 생각을 바꿨나요?</Heading>
-      <Caption>근거 의견은 선택 사항입니다. 나의 글은 선택할 수 없습니다.</Caption>
       <AppButton label="근거 없이 변경" selected={!source} onPress={() => setSource('')} />
       {opinions.filter((item) => item.authorId !== profile?.id).map((item) => <Panel key={item.id}>
         <Caption>{item.authorName} · {STANCE_LABEL[item.stance]}</Caption><Body>{item.content}</Body>
@@ -55,7 +54,6 @@ function StanceForm({ debate, opinions, mode, selectedOpinionId, reload }: { deb
     </>}
     <Heading>나의 입장을 골라주세요</Heading>
     <ChoiceGroup options={STANCES.map((value) => ({ value, label: STANCE_LABEL[value] }))} value={stance} onChange={setStance} disabled={mutation.pending} />
-    <Notice>{mode === 'join' ? '다른 사람의 선택은 토론이 끝난 뒤 공개돼요.' : '처음 선택한 입장과 이미 작성한 글의 입장은 바뀌지 않아요.'}</Notice>
     <ErrorNotice message={mutation.error} />
     <AppButton label={mode === 'join' ? '이 입장으로 참여하기' : '입장 변경'} variant="primary" loading={mutation.pending}
       disabled={!stance || (mode === 'change' && stance === debate.membership?.currentStance)}

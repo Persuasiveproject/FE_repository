@@ -21,7 +21,7 @@ export type JoinedDebatesResponse = { data: { debates: JoinedDebateDto[] }; meta
 
 // 공개 목록 #15도 같은 DebateListItem DTO를 사용합니다. 화면용 Discussion과는 다릅니다.
 export type PublicDebateDto = JoinedDebateDto & { kind: 'QUICK' | 'ENDLESS' };
-export type PublicDebatesQuery = { query?: string; categoryId?: string; status?: 'OPEN' | 'CLOSED'; cursor?: string };
+export type PublicDebatesQuery = { query?: string; categoryId?: string; status?: 'OPEN' | 'CLOSED'; kind?: 'QUICK' | 'ENDLESS'; cursor?: string };
 export type PublicDebatesResponse = { data: { debates: PublicDebateDto[] }; meta: { nextCursor: string | null } };
 export type CategoryDto = { id: string; name: string; sortOrder: number };
 export type CategoriesResponse = { data: { categories: CategoryDto[] } };

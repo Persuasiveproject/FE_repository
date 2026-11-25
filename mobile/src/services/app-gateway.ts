@@ -1,4 +1,4 @@
-import type { ChangeStanceInput, CreateDebateInput, CreateOpinionInput, Debate, DebateResults, JoinedDebateCard, Membership, Opinion, Profile, SavedDraft, SignUpInput, Stance, Summary, Wallet } from '../types/core';
+import type { AuthResult, AuthTerm, ChangeStanceInput, CoachResult, CompleteSignupInput, PhoneCodeResult, CreateDebateInput, CreateOpinionInput, Debate, IssueMap, DebateResults, JoinedDebateCard, Membership, Opinion, Profile, SavedDraft, SignUpInput, Stance, Summary, Wallet } from '../types/core';
 import type { BasicCredentials } from './basic-auth';
 
 // 화면용 계약입니다. mock/http 구현은 gateway.ts 한 곳에서 선택합니다.
@@ -8,6 +8,11 @@ export interface AppGateway {
   signInBasic?(credentials: BasicCredentials): Promise<Profile>;
   signUpDemo(input: SignUpInput): Promise<Profile>;
   signOut(): Promise<void>;
+  requestPhoneCode?(phoneNumber: string): Promise<PhoneCodeResult>;
+  verifyPhoneCode?(phoneNumber: string, code: string): Promise<AuthResult>;
+  signInKakao?(code: string, redirectUri: string): Promise<AuthResult>;
+  getTerms?(): Promise<AuthTerm[]>;
+  completeSignup?(input: CompleteSignupInput): Promise<Profile>;
   updateProfile(input: Pick<Profile, 'nickname' | 'interests'>): Promise<Profile>;
   listDebates(): Promise<Debate[]>;
   getDebate(id: string): Promise<Debate>;
@@ -25,6 +30,8 @@ export interface AppGateway {
   changeStance(input: ChangeStanceInput): Promise<Membership>;
   getResults(id: string): Promise<DebateResults>;
   getSummary(id: string): Promise<Summary>;
+  getIssues?(id: string): Promise<IssueMap>;
+  coachOpinion?(input: CreateOpinionInput): Promise<CoachResult>;
   getWallet(): Promise<Wallet>;
 }
 export class DomainError extends Error {

@@ -1,12 +1,12 @@
 import { apiOrigin, apiRequest, ApiError } from './api-client.ts';
-import { clearBasicAuth, commitBasicAuth, getAuthRevision, getBasicSession, makeBasicHeader, newOperationKey, subscribeBasicAuth } from './basic-auth.ts';
+import { clearBasicAuth, commitBasicAuth, getAuthRevision, getBasicSession, isTokenSession, makeBasicHeader, newOperationKey, subscribeBasicAuth } from './basic-auth.ts';
 import { DomainError, type AppGateway } from './app-gateway.ts';
-import { count, id, invalidResponse, record, timestamp } from './api-values.ts';
+import { count, id, invalidResponse, record, string, timestamp } from './api-values.ts';
 import { parseMembership, parseProfile, parseResults, stance, toDebate, toOpinion } from './http-models.ts';
 import { getPublicCategories, getPublicDebates, parsePublicDebates, toDiscussion } from './public-api.ts';
-import { getPublicDetail, getPublicPosts, getPublicSummary, getPublicThread, getRecentPublicPost } from './public-debate-api.ts';
+import { getPublicDetail, getPublicIssues, getPublicPosts, getPublicSummary, getPublicThread, getRecentPublicPost, parseCoach } from './public-debate-api.ts';
 import { fetchDraft, patchDraft, type DraftDto } from './remaining-api.ts';
-import type { CreateDebateInput, Profile, SavedDraft } from '../types/core';
+import type { AuthResult, AuthTerm, CreateDebateInput, Profile, SavedDraft } from '../types/core';
 import { opinionReactions } from './opinion-reactions.ts';
 
 type DraftOperation = { draftId?: string; publishKey: string; signature: string; uncertain?: boolean; editUncertain?: boolean; draft?: SavedDraft; publishStarted?: boolean; published?: boolean };
@@ -19,6 +19,20 @@ export function createHttpGateway(): AppGateway {
   const drafts = new Map<string, DraftOperation>();
   // 계정 변경/로그아웃/401이면 이전 계정의 상태와 재시도 기록도 버립니다.
   subscribeBasicAuth(() => { profile = null; keys.clear(); drafts.clear(); });
+  // 로그인·가입 응답: 회원이면 토큰을 세션에 넣고, 처음이면 가입표를 돌려준다.
+  function authResult(value: unknown): AuthResult {
+    const data = record(record(value).data);
+    if (data.status === 'SIGNUP_REQUIRED') {
+      if (data.method !== 'PHONE' && data.method !== 'KAKAO') invalidResponse();
+      return { status: 'SIGNUP_REQUIRED', signupToken: string(data.signupToken), method: data.method };
+    }
+    if (data.status !== 'LOGGED_IN' || typeof data.accessToken !== 'string' || !data.accessToken) invalidResponse();
+    const next = parseProfile({ data: data.user });
+    const revision = getAuthRevision();
+    commitBasicAuth({ origin: apiOrigin(), memberId: next.id, authorization: `Bearer ${data.accessToken}` }, revision);
+    profile = next;
+    return { status: 'LOGGED_IN', profile: next };
+  }
   const unavailable = async (): Promise<never> => { throw new DomainError('INTEGRATION_PENDING', '이 기능은 아직 서버 연결 준비 중입니다.'); };
   function key(scope: string) { if (!keys.has(scope)) keys.set(scope, newOperationKey('demo')); return keys.get(scope)!; }
   function ensureRevision(expected: number) { if (expected !== getAuthRevision()) throw new ApiError(0, 'SESSION_CHANGED', '계정이 변경되었습니다. 현재 계정으로 다시 시도해 주세요.'); }
@@ -93,7 +107,46 @@ export function createHttpGateway(): AppGateway {
       profile = next; return next;
     },
     signInDemo: unavailable, signUpDemo: unavailable, updateProfile: unavailable,
-    async signOut() { clearBasicAuth(); },
+    async signOut() {
+      // 토큰 로그인은 서버에서도 무효로 한다. 실패해도(만료·오프라인) 이 기기에서는 로그아웃한다.
+      if (isTokenSession()) { try { await apiRequest<unknown>('/v1/auth/logout', { auth: 'required', method: 'POST' }); } catch { /* 무시 */ } }
+      clearBasicAuth(); profile = null;
+    },
+    async requestPhoneCode(phoneNumber) {
+      const data = record(record(await apiRequest<unknown>('/v1/auth/phone/code', { auth: 'public', method: 'POST', body: { phoneNumber } })).data);
+      return { expiresInSeconds: count(data.expiresInSeconds), resendAfterSeconds: count(data.resendAfterSeconds),
+        devCode: typeof data.devCode === 'string' ? data.devCode : null };
+    },
+    async verifyPhoneCode(phoneNumber, code) {
+      return authResult(await apiRequest<unknown>('/v1/auth/phone/verify', { auth: 'public', method: 'POST', body: { phoneNumber, code } }));
+    },
+    async signInKakao(code, redirectUri) {
+      return authResult(await apiRequest<unknown>('/v1/auth/kakao', { auth: 'public', method: 'POST', body: { code, redirectUri } }));
+    },
+    async getTerms() {
+      const data = record(record(await apiRequest<unknown>('/v1/terms', { auth: 'public' })).data);
+      if (!Array.isArray(data.terms)) invalidResponse();
+      return data.terms.map((value): AuthTerm => {
+        const term = record(value);
+        if (typeof term.isRequired !== 'boolean') invalidResponse();
+        return { id: id(term.id), type: string(term.type), version: string(term.version), isRequired: term.isRequired, content: string(term.content) };
+      });
+    },
+    async completeSignup(input) {
+      const result = authResult(await apiRequest<unknown>('/v1/auth/signup', { auth: 'public', method: 'POST',
+        body: { signupToken: input.signupToken, nickname: input.nickname.trim(), agreedTermIds: input.agreedTermIds } }));
+      if (result.status !== 'LOGGED_IN') invalidResponse();
+      if (input.interests.length) {
+        // 관심 주제는 가입 직후 따로 저장한다. 실패해도 가입은 끝났으니 마이 페이지에서 다시 고를 수 있다.
+        try {
+          const categories = await getPublicCategories();
+          const ids = categories.filter((item) => input.interests.includes(item.name)).map((item) => item.id);
+          await apiRequest<unknown>('/v1/me/interests', { auth: 'required', method: 'PUT', body: { categoryIds: ids } });
+          return await gateway.getSession() ?? result.profile;
+        } catch { return result.profile; }
+      }
+      return result.profile;
+    },
     async listDebates() {
       const [page, categories] = await Promise.all([getPublicDebates(), getPublicCategories()]);
       return page.data.debates.map((item) => ({ ...toDiscussion(item, categories), id: item.id, status: item.status, type: item.kind, createdAt: item.createdAt, endsAt: item.endsAt, membership: null }));
@@ -231,7 +284,17 @@ export function createHttpGateway(): AppGateway {
         throw error;
       }
     },
-    getSummary: getPublicSummary, getWallet: unavailable,
+    getSummary: getPublicSummary, getIssues: getPublicIssues, getWallet: unavailable,
+    async coachOpinion(input) {
+      // 코치는 글쓰기를 막지 않는다. 느리거나 실패하면 UNAVAILABLE로 보고 그대로 올린다.
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      try {
+        return parseCoach(await apiRequest<unknown>(`/v1/debates/${id(input.debateId)}/posts/coach`, { auth: 'required', method: 'POST', signal: controller.signal,
+          body: { content: input.content.trim(), ...(input.parentId ? { parentId: id(input.parentId) } : {}) } }));
+      } catch { return { verdict: 'UNAVAILABLE', reasons: [], suggestion: null }; }
+      finally { clearTimeout(timer); }
+    },
   };
   return gateway;
 }

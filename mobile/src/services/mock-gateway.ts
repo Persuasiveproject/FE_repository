@@ -40,6 +40,7 @@ export function createMockGateway(options: { enabled?: boolean; now?: () => numb
       stance: 'NEUTRAL', content: '평가 방법도 함께 바뀌어야 해요. 과정 중심 평가를 병행하면 어떨까요?',
       parentId: `${debate.id}-op-1`, createdAt: iso(), upvotes: 5, downvotes: 0, myVote: null, replyCount: 0 });
   }
+  const registered = new Set<string>();
   const creates = new Map<string, Debate>();
   const posts = new Map<string, Opinion>();
   const createdDays: string[] = [];
@@ -66,6 +67,38 @@ export function createMockGateway(options: { enabled?: boolean; now?: () => numb
       profile = { ...profile, nickname: input.nickname.trim(), interests: [...input.interests] }; session = profile; return clone(profile);
     },
     async signOut() { checkMode(); session = null; },
+    // 데모: 문자는 보내지 않고 인증번호 123456을 화면에 보여 준다. 한 번 가입한 번호는 다음부터 바로 로그인된다.
+    async requestPhoneCode(phoneNumber) {
+      checkMode();
+      if (!/^01[016789]\d{7,8}$/.test(phoneNumber.replace(/[-\s]/g, ''))) throw new DomainError('PHONE_INVALID', '휴대폰 번호를 확인해 주세요.');
+      return { expiresInSeconds: 180, resendAfterSeconds: 30, devCode: '123456' };
+    },
+    async verifyPhoneCode(phoneNumber, code) {
+      checkMode();
+      if (code !== '123456') throw new DomainError('CODE_MISMATCH', '인증번호가 맞지 않아요. 데모 인증번호는 123456이에요.');
+      const key = phoneNumber.replace(/[-\s]/g, '');
+      if (registered.has(key)) { session = profile; return { status: 'LOGGED_IN', profile: clone(profile) }; }
+      return { status: 'SIGNUP_REQUIRED', signupToken: `mock-phone-${key}`, method: 'PHONE' };
+    },
+    async signInKakao() {
+      checkMode();
+      return { status: 'SIGNUP_REQUIRED', signupToken: 'mock-kakao', method: 'KAKAO' };
+    },
+    async getTerms() {
+      checkMode();
+      return [
+        { id: 'term-service', type: 'SERVICE', version: 'demo-1', isRequired: true, content: '영업중 서비스 이용약관(데모). 토론 글은 익명으로 공개돼요.' },
+        { id: 'term-privacy', type: 'PRIVACY', version: 'demo-1', isRequired: true, content: '개인정보 처리 안내(데모). 데모 모드는 아무것도 저장하지 않아요.' },
+        { id: 'term-marketing', type: 'MARKETING', version: 'demo-1', isRequired: false, content: '이벤트·소식 알림 수신 동의(선택).' },
+      ];
+    },
+    async completeSignup(input) {
+      checkMode();
+      if (!input.nickname.trim() || input.nickname.length > 30) throw new DomainError('NICKNAME_INVALID', '닉네임은 1~30자로 정해 주세요.');
+      if (!['term-service', 'term-privacy'].every((term) => input.agreedTermIds.includes(term))) throw new DomainError('TERMS_REQUIRED', '필수 약관에 동의해 주세요.');
+      if (input.signupToken.startsWith('mock-phone-')) registered.add(input.signupToken.slice('mock-phone-'.length));
+      profile = { ...profile, nickname: input.nickname.trim(), interests: [...input.interests] }; session = profile; return clone(profile);
+    },
     async updateProfile(input) {
       requireUser(); const error = validateProfile({ ...input, termsAccepted: true, privacyAccepted: true });
       if (error) throw new DomainError('VALIDATION_ERROR', error);
@@ -147,6 +180,34 @@ export function createMockGateway(options: { enabled?: boolean; now?: () => numb
       findDebate(id); const items = opinions.filter((item) => item.debateId === id && !item.parentId);
       return { generatedAt: iso(), sections: STANCES.map((stance) => ({ title: `${{ PRO: '찬성 핵심 근거', CON: '반대 핵심 근거', NEUTRAL: '유보와 남은 질문' }[stance]}`,
         text: items.find((item) => item.stance === stance)?.content ?? '아직 정리할 의견이 없습니다.', opinionIds: items.filter((item) => item.stance === stance).slice(0, 1).map((item) => item.id) })) };
+    },
+    async getIssues(id) {
+      // 데모: 시드 의견으로 쟁점 정리 모양을 보여 준다. 한 쟁점은 반대 쪽만 이야기해 '답 기다림'으로 보인다.
+      const debate = findDebate(id);
+      const roots = opinions.filter((item) => item.debateId === id && !item.parentId);
+      const pro = roots.find((item) => item.stance === 'PRO'), con = roots.find((item) => item.stance === 'CON');
+      if (debate.kind === '간단토론' || !pro || !con) return { createdAt: null, issues: [] };
+      return { createdAt: new Date(now() - 12 * 60000).toISOString(), issues: [
+        { title: '학습 효과', awaiting: null,
+          pro: { text: 'AI 사용 내역과 검토 과정을 공개하면 학습 효과를 지킬 수 있다는 의견이 있다.', opinionIds: [pro.id] },
+          con: { text: '기초 지식 없이 답을 받아들이면 학습이 어려워질 수 있다는 의견이 있다.', opinionIds: [con.id] } },
+        { title: '기초 지식 공백', awaiting: 'PRO', pro: null,
+          con: { text: 'AI가 준 답을 검토할 기초가 없으면 틀린 내용을 그대로 믿게 된다는 의견이 있다.', opinionIds: [con.id] } },
+      ] };
+    },
+    async coachOpinion(input) {
+      // 데모: 사람을 향한 표현이 있으면 그 문장을 빼고 주장만 남긴 제안을 돌려준다. 실제 서버는 Gemini가 바꿔 쓴다.
+      requireMember(input.debateId);
+      const rules: [RegExp, 'ATTACK' | 'MOCKING' | 'GENERALIZING' | 'HOSTILE'][] = [
+        [/(생각|개념|뇌)[이가]? ?없|수준|한심|멍청|무식|말이라고|어이가 없/, 'ATTACK'],
+        [/ㅋㅋ|ㅎㅎ|웃기네|퍽이나/, 'MOCKING'],
+        [/(찬성|반대)(하는|측|쪽) ?(사람|애|놈)?들?은? ?(다|전부|모두|죄다)/, 'GENERALIZING'],
+      ];
+      const reasons = [...new Set(rules.filter(([re]) => re.test(input.content)).map(([, reason]) => reason))];
+      if (!reasons.length) return { verdict: 'OK', reasons: [], suggestion: null };
+      const kept = input.content.split(/(?<=[.!?。\n])\s*|,\s*/).filter((part) => part.trim() && !rules.some(([re]) => re.test(part)));
+      const suggestion = kept.join(' ').trim() || '이 주장에는 동의하기 어려워요. 제 생각을 이유와 함께 말해 볼게요.';
+      return { verdict: 'SUGGEST', reasons, suggestion };
     },
     async getWallet() {
       requireUser();
