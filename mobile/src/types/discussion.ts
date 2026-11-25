@@ -8,6 +8,7 @@ export type Discussion = {
   opinionCount?: number;
   kind?: '끝장토론' | '간단토론';
   status?: 'OPEN' | 'CLOSED';
+  endsAt?: string | null;
 };
 
 export type HomeFeed = {

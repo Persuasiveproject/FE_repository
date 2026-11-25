@@ -12,14 +12,13 @@ import { dataSource, gateway } from '@/services/gateway';
 
 export default function SavedDraftsScreen() {
   const { revision } = useSession();
-  return <Page title="저장한 초안"><RequireSession>{dataSource === 'api' ? <Drafts key={revision} /> : <Notice>초안 저장은 실제 서버 모드에서 사용할 수 있습니다.</Notice>}</RequireSession></Page>;
+  return <Page title="저장한 초안"><RequireSession>{dataSource === 'api' ? <Drafts key={revision} /> : <Notice>저장한 초안이 없어요.</Notice>}</RequireSession></Page>;
 }
 function Drafts() {
   const { revision } = useSession();
   const loader = useCallback(() => withAuthRevision(revision, async () => gateway.getSavedDrafts!()), [revision]);
   const { resource, reload } = useFocusResource(loader);
   return <>
-    <Notice>이 앱 실행 중 저장하거나 불러온 초안입니다. 초안 내용은 서버에 저장되지만, 이 목록은 새로고침·로그아웃 시 비워집니다.</Notice>
     <ResourceContent resource={resource} reload={reload}>{(drafts) => <>
       {drafts.length === 0 && <Notice>현재 앱에서 기억하는 초안이 없습니다.</Notice>}
       {drafts.map((draft) => <Panel key={draft.id}>

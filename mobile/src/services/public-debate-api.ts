@@ -2,7 +2,7 @@ import { apiRequest, ApiError } from './api-client.ts';
 import { count, id, invalidResponse, nextCursor, nullableTime, record, routeId, string, timestamp } from './api-values.ts';
 import { getPublicCategories, parsePublicDebateItems, toDiscussion } from './public-api.ts';
 import type { PublicDetailDto, PublicHomeDto, PublicPostDto, PublicPostPage, PublicPostQuery } from '../types/api';
-import type { OpinionCardData, Summary } from '../types/core';
+import type { CoachResult, Issue, IssueMap, IssueSide, OpinionCardData, Summary } from '../types/core';
 import type { HomeFeed } from '../types/discussion';
 import { parseMembership } from './http-models.ts';
 import { getAuthRevision, subscribeBasicAuth } from './basic-auth.ts';
@@ -169,4 +169,43 @@ export async function getPublicSummary(debateId: string, signal?: AbortSignal): 
   const key = routeId(debateId);
   try { return parsePublicSummary(await apiRequest<unknown>(`/v1/debates/${key}/summary`, { auth: 'public', signal })); }
   catch (error) { return readError(error); }
+}
+
+// 쟁점 정리(GET /v1/debates/:id/issues). 근거가 답글이면 그 답글이 달린 원래 의견의 대화로 연결한다.
+export function parsePublicIssues(value: unknown): IssueMap {
+  const data = record(record(value).data);
+  if (!Array.isArray(data.issues)) invalidResponse();
+  const side = (raw: unknown): IssueSide | null => {
+    if (raw == null) return null;
+    const entry = record(raw);
+    if (!Array.isArray(entry.sources)) invalidResponse();
+    const opinionIds = [...new Set(entry.sources.map((source) => {
+      const src = record(source);
+      return src.rootPostId != null ? id(src.rootPostId) : id(src.postId);
+    }))];
+    return opinionIds.length ? { text: string(entry.text), opinionIds } : null;
+  };
+  const issues = data.issues.map((raw): Issue => {
+    const item = record(raw);
+    const pro = side(item.pro), con = side(item.con);
+    const awaiting = item.awaiting === 'PRO' ? 'PRO' : item.awaiting === 'CON' ? 'CON' : null;
+    return { title: string(item.title), pro, con, awaiting: pro && con ? null : awaiting };
+  }).filter((issue) => issue.pro || issue.con);
+  return { createdAt: data.createdAt == null ? null : timestamp(data.createdAt), issues };
+}
+export async function getPublicIssues(debateId: string, signal?: AbortSignal): Promise<IssueMap> {
+  const key = routeId(debateId);
+  try { return parsePublicIssues(await apiRequest<unknown>(`/v1/debates/${key}/issues`, { auth: 'public', signal })); }
+  catch (error) { return readError(error); }
+}
+const COACH_REASONS = ['ATTACK', 'MOCKING', 'GENERALIZING', 'HOSTILE'] as const;
+// 작성 코치(POST /v1/debates/:id/posts/coach). 응답 모양이 이상하면 UNAVAILABLE로 보고 그대로 올린다.
+export function parseCoach(value: unknown): CoachResult {
+  const outer = value && typeof value === 'object' ? (value as { data?: unknown }).data : null;
+  const data = (outer && typeof outer === 'object' ? outer : {}) as Record<string, unknown>;
+  const reasons = Array.isArray(data.reasons) ? data.reasons.filter((r): r is CoachResult['reasons'][number] => (COACH_REASONS as readonly unknown[]).includes(r)) : [];
+  const suggestion = typeof data.suggestion === 'string' && data.suggestion.trim() ? data.suggestion.trim() : null;
+  if (data.verdict === 'SUGGEST' && suggestion && reasons.length) return { verdict: 'SUGGEST', reasons, suggestion };
+  if (data.verdict === 'OK') return { verdict: 'OK', reasons: [], suggestion: null };
+  return { verdict: 'UNAVAILABLE', reasons: [], suggestion: null };
 }

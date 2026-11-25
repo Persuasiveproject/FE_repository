@@ -37,7 +37,7 @@ export function apiOrigin(): string {
     return url.origin;
   } catch { throw new ApiError(0, 'INVALID_API_URL', '서버 주소에는 origin만 입력해 주세요.'); }
 }
-// 시연용 Basic 인증이며 카카오/OAuth 로그인 구현과 구분합니다.
+// 인증: 시연 계정은 Basic, 휴대폰·카카오 로그인은 Bearer 토큰(세션의 authorization 값)을 보냅니다.
 export async function apiRequest<T>(path: string, options: Options): Promise<T> {
   const snapshot = getAuthRevision();
   const session = getBasicSession();
@@ -49,7 +49,7 @@ export async function apiRequest<T>(path: string, options: Options): Promise<T> 
   if (session && options.auth !== 'public' && options.auth !== 'login' && session.origin !== baseUrl) throw new ApiError(0, 'AUTH_SERVER_CHANGED', '서버 주소가 변경되었습니다. 다시 로그인해 주세요.');
   const authorization = options.auth === 'login' ? makeBasicHeader(options.credentials) : options.auth === 'public' ? undefined : session?.authorization;
   if (options.auth === 'login' && (path !== '/v1/me' || (options.method ?? 'GET') !== 'GET')) throw new ApiError(0, 'INVALID_LOGIN_REQUEST', '로그인 요청 경로가 올바르지 않습니다.');
-  if (authorization && !baseUrl.startsWith('https://')) throw new ApiError(0, 'HTTPS_REQUIRED', '시연 인증은 HTTPS 서버에서만 사용할 수 있습니다.');
+  if (authorization && !baseUrl.startsWith('https://') && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(baseUrl)) throw new ApiError(0, 'HTTPS_REQUIRED', '로그인 정보는 HTTPS 서버에만 보낼 수 있습니다.');
   let response: Response;
   try {
     response = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, {

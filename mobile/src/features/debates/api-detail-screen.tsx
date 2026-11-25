@@ -13,13 +13,19 @@ import { getPublicDetail } from '@/services/public-debate-api';
 import { useServerClock } from '@/hooks/use-server-clock';
 import type { PublicDetailDto } from '@/types/api';
 import { TopicSummaryCard } from './topic-summary-card';
+import { DetailAside } from './detail-aside';
+import { IssueMapCard } from './issue-map';
+import { useWide } from '@/hooks/use-wide';
 
 export default function ApiDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { revision } = useSession();
   const loader = useCallback(() => withAuthRevision(revision, () => getPublicDetail(id)), [id, revision]);
   const { resource, reload } = useFocusResource(loader);
-  return <Page title="토론">
+  const d = resource.status === 'success' ? resource.data : null;
+  const aside = d ? <DetailAside id={d.id} endsAt={d.endsAt} closed={d.status === 'CLOSED'} participants={d.participantCount}
+    category={d.category.name} kind={d.kind === 'ENDLESS' ? '끝장토론' : '간단토론'} /> : undefined;
+  return <Page title="토론" aside={aside}>
     <ResourceContent resource={resource} reload={reload}>{(debate) => <ApiDetailBody key={`${debate.id}/${revision}`} debate={debate} />}</ResourceContent>
   </Page>;
 }
@@ -29,13 +35,14 @@ function ApiDetailBody({ debate }: { debate: PublicDetailDto }) {
   const { clock, error, reload, writable } = useServerClock(id);
   const closed = debate.status === 'CLOSED' || clock?.isReadOnly === true;
   const canWrite = writable && !closed;
+  const wide = useWide();
   return <>
       <TopicSummaryCard remaining={closed ? '토론 종료' : clock === null ? '서버 시간 확인 중' : clock.remainingSeconds === null ? '마감 시간 미정' : remainingTime(new Date(clock.serverNow + clock.remainingSeconds * 1000).toISOString(), clock.serverNow)}
         title={debate.title} description={debate.content} closed={closed} category={debate.category.name} kind={debate.kind === 'ENDLESS' ? '끝장토론' : '간단토론'} />
       <Caption>손님 {debate.participantCount}명{debate.endsAt ? `   ${new Date(debate.endsAt).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}에 문 닫아요` : ''}</Caption>
       <ErrorNotice message={error ? `서버 시간 확인 실패: ${error}` : ''} />
       {!!error && <AppButton label="서버 시간 다시 확인" onPress={reload} />}
-      {closed && <Notice>종료된 토론입니다. 의견과 입장은 더 이상 변경할 수 없습니다.</Notice>}
+      {closed && <Notice>종료된 토론이에요.</Notice>}
       {!profile && <AppButton label="로그인하고 참여하기" onPress={() => router.navigate('/auth/login')} />}
       {profile && !closed && !debate.myParticipation && <AppButton label="입장 선택하고 참여하기" disabled={!canWrite} variant="primary" onPress={() => router.navigate({ pathname: '/discussions/[id]/join', params: { id } })} />}
       {debate.myParticipation && <Panel><Body>처음 선 자리  {STANCE_LABEL[debate.myParticipation.initialStance]}</Body><Body>지금 선 자리  {STANCE_LABEL[debate.myParticipation.currentStance]}</Body>
@@ -45,6 +52,7 @@ function ApiDetailBody({ debate }: { debate: PublicDetailDto }) {
         <AppButton label="투표 · 입장 변경" disabled={!canWrite} onPress={() => router.navigate({ pathname: '/discussions/[id]/vote', params: { id } })} />
       </Row>}
       {closed && <AppButton label="최종 통계 보기" variant="primary" onPress={() => router.navigate({ pathname: '/discussions/[id]/results', params: { id } })} />}
+      {debate.kind === 'ENDLESS' && !wide && <IssueMapCard debateId={debate.id} myStance={canWrite ? debate.myParticipation?.currentStance : null} />}
       <PublicOpinionFeed key={`${debate.id}/${revision}`} debateId={debate.id} membership={debate.myParticipation} closed={!canWrite} />
       <AppButton label="토론 목록으로" onPress={() => router.navigate('/discussions')} />
     </>;

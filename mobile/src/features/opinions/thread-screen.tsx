@@ -41,7 +41,7 @@ function DemoThreadScreen() {
           disabled={mutation.pending || closed} canVote={canVote && item.authorId !== profile?.id}
           onPersuaded={() => router.navigate({ pathname: '/discussions/[id]/vote', params: { id, opinionId: item.id } })}
           onVote={(vote) => void mutation.run(() => gateway.voteOpinion(id, item.id, vote), reload)} />)}
-        {visibleReplies.length === 0 && <Notice>{replies.length === 0 ? '첫 답글을 남겨 보세요.' : '이 입장의 답글은 아직 없습니다.'}</Notice>}
+        {visibleReplies.length === 0 && <Notice>{replies.length === 0 ? '아직 답글이 없어요.' : '이 입장의 답글은 아직 없습니다.'}</Notice>}
         <ErrorNotice message={mutation.error} />
         {!closed && <AppButton label="이 의견에 답글 쓰기" variant="primary" onPress={() => router.navigate({ pathname: '/discussions/[id]/reply/[opinionId]', params: { id, opinionId } })} />}
         {closed && <Notice>종료된 토론의 의견은 읽기만 가능합니다.</Notice>}

@@ -43,6 +43,7 @@ export async function getPublicDebates(query: PublicDebatesQuery = {}, signal?: 
   if (query.query?.trim()) search.set('query', query.query.trim());
   if (query.categoryId) search.set('categoryId', query.categoryId);
   if (query.status) search.set('status', query.status);
+  if (query.kind) search.set('kind', query.kind);
   if (query.cursor) search.set('cursor', query.cursor);
   const response = await apiRequest<unknown>(`/v1/debates?${search}`, { auth: 'public', signal });
   return parsePublicDebates(response);
@@ -55,7 +56,7 @@ export function toDiscussion(item: PublicDebateDto, categories: CategoryDto[]): 
     title: item.title,
     // #15에는 본문 요약이 없습니다. 설명이나 현재 입장을 예시 값으로 채우지 않습니다.
     description: '', participants: item.participantCount, opinionCount: item.opinionCount,
-    kind: item.kind === 'QUICK' ? '간단토론' : '끝장토론', status: item.status,
+    kind: item.kind === 'QUICK' ? '간단토론' : '끝장토론', status: item.status, endsAt: item.endsAt,
   };
 }
 

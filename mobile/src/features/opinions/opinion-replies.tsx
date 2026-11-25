@@ -21,7 +21,7 @@ export function OpinionReplies({ debateId, parentId, closed, canParticipate, onO
   const { profile } = useSession();
   return <View style={styles.replies}>
     <ResourceContent resource={resource} reload={reload}>{(items) => <>
-      {items.length === 0 && <Notice>아직 답글이 없습니다. 첫 답글을 남겨 보세요.</Notice>}
+      {items.length === 0 && <Notice>아직 답글이 없어요.</Notice>}
       {items.map((item) => <OpinionCard key={item.id} item={item} disabled={mutation.pending || closed}
         canVote={canParticipate && item.authorId !== profile?.id}
         onVote={(vote) => void mutation.run(() => gateway.voteOpinion(debateId, item.id, vote), reload)}

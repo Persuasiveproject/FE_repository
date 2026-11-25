@@ -92,7 +92,7 @@ export const StanceColors = {
 
 export const AppSpacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20 } as const;
 export const AppRadius = { button: 999, card: 20, bubble: 18, field: 16 } as const;
-export const AppLayout = { maxWidth: 600, touchTarget: 44, iconSize: 24 } as const;
+export const AppLayout = { maxWidth: 720, touchTarget: 44, iconSize: 24 } as const;
 export const AppTypography = {
   logo: { fontSize: 24, lineHeight: 30, fontWeight: '900', letterSpacing: -0.6 },
   display: { fontSize: 26, lineHeight: 34, fontWeight: '700', letterSpacing: -0.6 },
@@ -112,3 +112,7 @@ export const AppSurfaces = {
   button: { minHeight: 48, borderRadius: AppRadius.button, paddingHorizontal: AppSpacing.xl,
     borderWidth: 1.5, borderColor: AppColors.border, backgroundColor: AppColors.surface },
 } as const;
+
+// 넓은 화면(가로 태블릿·PC): 회색 바탕(canvas) 위에 흰 패널을 여러 개 놓는다.
+export const WideLayout = { maxWidth: 1240, panelWidth: 340, mainMaxWidth: 760, gap: 20, sideNavWidth: 232, railWidth: 88 } as const;
+export const PanelSurface = { backgroundColor: AppColors.surface, borderRadius: 20, padding: 24, gap: 12 } as const;

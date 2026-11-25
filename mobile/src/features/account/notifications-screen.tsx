@@ -15,7 +15,7 @@ import { appendNotifications, getNotifications, type NotificationPage } from '@/
 
 export default function NotificationsScreen() {
   const { revision } = useSession();
-  return <Page title="알림"><RequireSession>{dataSource === 'api' ? <Notifications key={revision} /> : <Notice>알림은 실제 서버 모드에서 확인할 수 있습니다.</Notice>}</RequireSession></Page>;
+  return <Page title="알림"><RequireSession>{dataSource === 'api' ? <Notifications key={revision} /> : <Notice>아직 알림이 없어요.</Notice>}</RequireSession></Page>;
 }
 function Notifications() {
   const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
@@ -39,7 +39,6 @@ function LoadedNotifications({ firstPage, unreadOnly, reload }: { firstPage: Not
   const mutation = useMutation();
   return <>
     <Caption>안 읽은 알림 {unreadCount}개</Caption>
-    <Caption>현재 서버는 조회만 지원합니다. 알림을 열어도 읽음 상태는 바뀌지 않습니다.</Caption>
     {items.length === 0 && <Notice>{unreadOnly ? '안 읽은 알림이 없습니다.' : '아직 알림이 없습니다.'}</Notice>}
     {items.map((item) => <Panel key={item.id}>
       <Caption>{item.isRead ? '읽음' : '안 읽음'} · {new Date(item.createdAt).toLocaleString('ko-KR')}</Caption>

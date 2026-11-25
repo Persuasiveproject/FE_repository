@@ -13,7 +13,7 @@ import { getStanceEvents } from '@/services/remaining-api';
 
 export default function StanceEventsScreen() {
   const { revision } = useSession();
-  return <Page title="내 입장 변경 이력"><RequireSession>{dataSource === 'api' ? <Events key={revision} /> : <Notice>입장 변경 이력은 실제 서버 모드에서 확인할 수 있습니다.</Notice>}</RequireSession></Page>;
+  return <Page title="내 입장 변경 이력"><RequireSession>{dataSource === 'api' ? <Events key={revision} /> : <Notice>아직 입장을 바꾼 기록이 없어요.</Notice>}</RequireSession></Page>;
 }
 function Events() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,7 +21,6 @@ function Events() {
   const loader = useCallback(() => withAuthRevision(revision, () => getStanceEvents(id)), [id, revision]);
   const { resource, reload } = useFocusResource(loader);
   return <ResourceContent resource={resource} reload={reload}>{(events) => <>
-    <Caption>최근 변경 순서입니다. 최초 참여는 변경 이력에 포함되지 않습니다.</Caption>
     {events.length === 0 && <Notice>아직 입장을 변경한 기록이 없습니다.</Notice>}
     {events.map((event) => <Panel key={event.id}>
       <Body>{STANCE_LABEL[event.fromStance]} → {STANCE_LABEL[event.toStance]}</Body>
