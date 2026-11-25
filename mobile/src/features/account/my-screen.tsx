@@ -11,7 +11,6 @@ import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 import { useSession } from '@/features/session/session-provider';
 import { useMutation } from '@/hooks/use-mutation';
 import { dataSource, gateway } from '@/services/gateway';
-import { isTokenSession } from '@/services/basic-auth';
 import { creditLabel } from '@/types/core';
 
 // B안 마이: 프로필 한 줄 + 숫자 묶음 + 구분선 메뉴. 버튼을 세로로 쌓지 않는다.
@@ -56,7 +55,6 @@ export default function MyScreen() {
     {confirmLogout && <AppButton label="로그아웃 확인" variant="primary" loading={mutation.pending}
       onPress={() => void mutation.run(async () => { await gateway.signOut(); await refresh(); }, () => router.replace('/'))} />}
     <ErrorNotice message={mutation.error} />
-    <Text style={styles.foot}>{dataSource === 'api' ? (isTokenSession() ? '휴대폰·카카오 계정으로 로그인됨' : '시연 계정 · 실제 서버 인증') : '데모 프로필 · 실제 본인 확인 전'}</Text>
   </RequireSession></Page>;
 }
 
@@ -74,6 +72,5 @@ const styles = StyleSheet.create({
   menuLabel: { ...AppTypography.body, fontSize: 16, color: AppColors.text },
   menuRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   menuValue: { ...AppTypography.label, fontSize: 16, color: AppColors.text },
-  foot: { ...AppTypography.caption, color: AppColors.textFaint },
   dim: { opacity: 0.45 },
 });
