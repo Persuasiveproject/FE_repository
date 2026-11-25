@@ -9,6 +9,10 @@ import { fetchDraft, patchDraft, type DraftDto } from './remaining-api.ts';
 import type { AuthResult, AuthTerm, CreateDebateInput, Profile, SavedDraft } from '../types/core';
 import { opinionReactions } from './opinion-reactions.ts';
 
+const COIN_LABELS: Record<string, string> = {
+  PURCHASE: '코인 구매', AD_REWARD: '광고 보상', DEBATE_CREATE: '토론 개설', REWARD: '토론 보상',
+  SIGNUP_BONUS: '가입 축하 코인', ADMIN_GRANT: '운영자 지급', REFUND: '환불',
+};
 type DraftOperation = { draftId?: string; publishKey: string; signature: string; uncertain?: boolean; editUncertain?: boolean; draft?: SavedDraft; publishStarted?: boolean; published?: boolean };
 // 객체 속성 순서에 의존하지 않고 서버로 보내는 값으로 같은 편집인지 판단합니다.
 const draftSignature = (input: CreateDebateInput) => JSON.stringify([input.category, input.kind, input.kind === 'QUICK' ? input.durationMinutes : null, input.title.trim(), input.content.trim()]);
@@ -106,7 +110,23 @@ export function createHttpGateway(): AppGateway {
       commitBasicAuth({ origin: apiOrigin(), memberId: next.id, authorization: makeBasicHeader(credentials) }, revision);
       profile = next; return next;
     },
-    signInDemo: unavailable, signUpDemo: unavailable, updateProfile: unavailable,
+    signInDemo: unavailable, signUpDemo: unavailable,
+    async updateProfile(input) {
+      const revision = getAuthRevision();
+      const nickname = input.nickname.trim();
+      if (nickname !== profile?.nickname) {
+        try { await apiRequest<unknown>('/v1/me', { auth: 'required', method: 'PATCH', body: { nickname } }); }
+        catch (error) {
+          if (error instanceof ApiError && error.code === 'NICKNAME_INVALID' && !/[가-힣]/.test(error.message)) throw new ApiError(error.status, error.code, '사용할 수 없는 닉네임이에요.');
+          throw error;
+        }
+      }
+      const categories = await getPublicCategories();
+      const ids = categories.filter((item) => input.interests.includes(item.name)).map((item) => item.id);
+      await apiRequest<unknown>('/v1/me/interests', { auth: 'required', method: 'PUT', body: { categoryIds: ids } });
+      ensureRevision(revision);
+      return await gateway.getSession() ?? invalidResponse();
+    },
     async signOut() {
       // 토큰 로그인은 서버에서도 무효로 한다. 실패해도(만료·오프라인) 이 기기에서는 로그아웃한다.
       if (isTokenSession()) { try { await apiRequest<unknown>('/v1/auth/logout', { auth: 'required', method: 'POST' }); } catch { /* 무시 */ } }
@@ -284,7 +304,24 @@ export function createHttpGateway(): AppGateway {
         throw error;
       }
     },
-    getSummary: getPublicSummary, getIssues: getPublicIssues, getWallet: unavailable,
+    getSummary: getPublicSummary, getIssues: getPublicIssues,
+    async getWallet() {
+      const revision = getAuthRevision();
+      const [wallet, history] = await Promise.all([
+        apiRequest<unknown>('/v1/me/wallet', { auth: 'required' }),
+        apiRequest<unknown>('/v1/me/coin-transactions', { auth: 'required' }),
+      ]);
+      ensureRevision(revision);
+      const balance = count(record(record(wallet).data).coinBalance);
+      if (profile) profile = { ...profile, coins: balance };
+      const entries = record(record(history).data).transactions;
+      if (!Array.isArray(entries)) invalidResponse();
+      return { balance, transactions: entries.map((value) => {
+        const entry = record(value);
+        if (typeof entry.amount !== 'number' || !Number.isSafeInteger(entry.amount)) invalidResponse();
+        return { id: id(entry.id), label: COIN_LABELS[string(entry.type)] ?? '코인 변동', amount: entry.amount, createdAt: timestamp(entry.createdAt) };
+      }) };
+    },
     async coachOpinion(input) {
       // 코치는 글쓰기를 막지 않는다. 느리거나 실패하면 UNAVAILABLE로 보고 그대로 올린다.
       const controller = new AbortController();
